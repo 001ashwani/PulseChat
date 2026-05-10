@@ -1,0 +1,16 @@
+# Root
+node_modules/
+.DS_Store
+dist/
+dist-ssr
+*.local
+.env
+
+# Server specific
+server/node_modules/
+server/.env
+
+# Client specific
+pulsechat-client/node_modules/
+pulsechat-client/dist/
+pulsechat-client/.env
