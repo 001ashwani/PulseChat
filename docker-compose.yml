@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # Backend API Server
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    container_name: pulsechat-server
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT=5000
+      - MONGO_URI=${MONGO_URI:-mongodb://mongodb:27017/pulsechat}
+      - JWT_SECRET=${JWT_SECRET:-dev_secret_key_min_32_chars_required}
+      - JWT_EXPIRE=${JWT_EXPIRE:-7d}
+      - CLIENT_URL=${CLIENT_URL:-http://localhost:3000}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    volumes:
+      - ./server/logs:/app/logs
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - pulsechat-network
+
+  # Frontend Client
+  client:
+    build:
+      context: .
+      dockerfile: pulsechat-client/Dockerfile
+    container_name: pulsechat-client
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    depends_on:
+      - server
+    networks:
+      - pulsechat-network
+
+  # MongoDB Database
+  mongodb:
+    image: mongo:7-alpine
+    container_name: pulsechat-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: pulsechat
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-password}
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    restart: unless-stopped
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - pulsechat-network
+
+volumes:
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+
+networks:
+  pulsechat-network:
+    driver: bridge

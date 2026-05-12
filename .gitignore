@@ -9,8 +9,31 @@ dist-ssr
 # Server specific
 server/node_modules/
 server/.env
+server/logs/
+server/uploads/
 
 # Client specific
 pulsechat-client/node_modules/
 pulsechat-client/dist/
 pulsechat-client/.env
+pulsechat-client/.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+

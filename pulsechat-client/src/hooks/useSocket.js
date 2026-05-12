@@ -11,15 +11,25 @@ export function useSocket(userId) {
 
     // Connect once
     if (!socketInstance) {
-      socketInstance = io('http://localhost:5000', { transports: ['websocket'] });
+      const url = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      socketInstance = io(url, { transports: ['websocket'] });
     }
     socketRef.current = socketInstance;
 
     // Register this user
-    socketInstance.emit('user_connected', userId);
+    const registerUser = () => {
+      socketInstance.emit('user_connected', userId);
+    };
+
+    if (socketInstance.connected) {
+      registerUser();
+    }
+    
+    socketInstance.on('connect', registerUser);
 
     return () => {
-      // Don't disconnect on component unmount — keep alive while logged in
+      // Clean up the event listener, but keep socket alive
+      socketInstance.off('connect', registerUser);
     };
   }, [userId]);
 

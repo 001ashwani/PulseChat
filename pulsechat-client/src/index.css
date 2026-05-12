@@ -1,53 +1,57 @@
 @import "tailwindcss";
 
 @theme {
-  --color-outline: #8c909f;
-  --color-on-surface-variant: #c2c6d6;
-  --color-on-secondary-fixed: #23005c;
-  --color-tertiary-container: #ff516a;
-  --color-on-primary-container: #00285d;
-  --color-inverse-surface: #e5e2e3;
-  --color-surface-dim: #131314;
-  --color-on-tertiary-fixed-variant: #92002a;
-  --color-on-background: #e5e2e3;
-  --color-on-tertiary: #67001b;
-  --color-primary-container: #4d8eff;
-  --color-tertiary-fixed-dim: #ffb2b7;
-  --color-primary-fixed-dim: #adc6ff;
-  --color-surface-container-high: #2a2a2b;
-  --color-on-error: #690005;
-  --color-surface-container-lowest: #0e0e0f;
-  --color-surface-tint: #adc6ff;
-  --color-secondary: #d0bcff;
-  --color-on-secondary-container: #c4abff;
-  --color-error: #ffb4ab;
-  --color-surface-variant: #353436;
-  --color-secondary-fixed: #e9ddff;
-  --color-tertiary: #ffb2b7;
-  --color-error-container: #93000a;
-  --color-on-primary-fixed-variant: #004395;
-  --color-on-primary: #002e6a;
-  --color-inverse-primary: #005ac2;
-  --color-surface-bright: #3a393a;
-  --color-outline-variant: #424754;
-  --color-secondary-container: #571bc1;
-  --color-surface: #131314;
-  --color-on-primary-fixed: #001a42;
-  --color-primary-fixed: #d8e2ff;
-  --color-on-surface: #e5e2e3;
-  --color-on-error-container: #ffdad6;
-  --color-primary: #adc6ff;
-  --color-on-tertiary-fixed: #40000d;
-  --color-surface-container: #201f20;
-  --color-on-secondary: #3c0091;
-  --color-on-tertiary-container: #5b0017;
-  --color-secondary-fixed-dim: #d0bcff;
-  --color-on-secondary-fixed-variant: #5516be;
-  --color-inverse-on-surface: #313031;
-  --color-surface-container-highest: #353436;
-  --color-surface-container-low: #1c1b1c;
-  --color-tertiary-fixed: #ffdadb;
-  --color-background: #131314;
+  --color-secondary: #665e53;
+  --color-secondary-dim: #595248;
+  --color-on-tertiary-container: #614b18;
+  --color-primary-fixed: #b9efc5;
+  --color-primary-dim: #2b5d3c;
+  --color-surface-container-high: #e3eae2;
+  --color-on-secondary-fixed: #453e34;
+  --color-error-container: #fa746f;
+  --color-on-primary-fixed: #15482a;
+  --color-on-secondary: #fff8f2;
+  --color-error: #a83836;
+  --color-surface-container: #e9f0e8;
+  --color-on-error: #fff7f6;
+  --color-on-surface-variant: #59615a;
+  --color-primary-fixed-dim: #abe1b7;
+  --color-outline-variant: #abb4ac;
+  --color-on-primary-fixed-variant: #346544;
+  --color-on-primary-container: #2a5b3b;
+  --color-surface-container-lowest: #ffffff;
+  --color-inverse-primary: #bef5ca;
+  --color-tertiary-dim: #67501c;
+  --color-on-background: #2c342e;
+  --color-on-tertiary-fixed: #4d3806;
+  --color-tertiary-fixed: #fad998;
+  --color-inverse-on-surface: #9a9e99;
+  --color-primary-container: #b9efc5;
+  --color-secondary-container: #ece1d3;
+  --color-surface-bright: #f7faf4;
+  --color-on-secondary-fixed-variant: #625a50;
+  --color-secondary-fixed: #ece1d3;
+  --color-tertiary: #745c27;
+  --color-on-surface: #2c342e;
+  --color-tertiary-fixed-dim: #ebcb8b;
+  --color-inverse-surface: #0b0f0c;
+  --color-on-tertiary: #fff8f1;
+  --color-on-error-container: #6e0a12;
+  --color-surface-dim: #d3dcd3;
+  --color-surface-tint: #386948;
+  --color-outline: #747d75;
+  --color-on-secondary-container: #585146;
+  --color-on-primary: #e8ffe9;
+  --color-surface-container-low: #f0f5ee;
+  --color-primary: #386948;
+  --color-background: #f7faf4;
+  --color-secondary-fixed-dim: #ded3c5;
+  --color-surface-variant: #dce5db;
+  --color-on-tertiary-fixed-variant: #6c5421;
+  --color-surface-container-highest: #dce5db;
+  --color-tertiary-container: #fad998;
+  --color-error-dim: #67040d;
+  --color-surface: #f7faf4;
 
   --spacing-base: 4px;
   --spacing-xs: 4px;
@@ -57,21 +61,29 @@
   --spacing-lg: 24px;
   --spacing-xl: 32px;
   --spacing-gutter-chat: 12px;
+  --spacing-container-margin: 24px;
+  --spacing-unit: 4px;
+  --spacing-gutter: 16px;
 
-  --font-body-lg: "Geist";
-  --font-body-md: "Geist";
-  --font-headline-md: "Geist";
-  --font-title-lg: "Geist";
-  --font-display-lg: "Geist";
-  --font-label-sm: "Geist";
+  --font-body-lg: "Nunito Sans", sans-serif;
+  --font-body-md: "Nunito Sans", sans-serif;
+  --font-headline-md: "Literata", serif;
+  --font-title-lg: "Literata", serif;
+  --font-display-lg: "Literata", serif;
+  --font-label-sm: "Nunito Sans", sans-serif;
+  --font-headline: "Literata", serif;
+  --font-display: "Literata", serif;
+  --font-body: "Nunito Sans", sans-serif;
+  --font-label: "Nunito Sans", sans-serif;
 }
 
+@import url('https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,200..900;1,7..72,200..900&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap');
 
 @layer base {
   body {
-    font-family: 'Geist', sans-serif;
-    background-color: var(--color-background, #131314);
-    color: var(--color-on-surface, #e5e2e3);
+    font-family: 'Nunito Sans', sans-serif;
+    background-color: var(--color-background);
+    color: var(--color-on-surface);
     margin: 0;
     padding: 0;
     overflow-x: hidden;
@@ -80,28 +92,28 @@
 
 @layer components {
   .glass-card {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.4);
     backdrop-filter: blur(32px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-top: 1px solid rgba(255, 255, 255, 0.6);
   }
 
   .glass-input {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(16px);
     transition: all 0.3s ease;
   }
 
   .glass-input:focus {
-    border-color: #adc6ff;
-    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--color-primary);
+    background: rgba(255, 255, 255, 0.8);
     outline: none;
-    box-shadow: 0 0 20px rgba(173, 198, 255, 0.1);
+    box-shadow: 0 0 20px rgba(56, 105, 72, 0.1);
   }
 
   .primary-glow {
-    box-shadow: 0 0 24px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 24px rgba(56, 105, 72, 0.3);
   }
 
   .material-symbols-outlined {
@@ -118,24 +130,56 @@
   }
 
   .glass-surface {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.6);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
   }
   .glass-floating {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(32px);
     -webkit-backdrop-filter: blur(32px);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.6);
   }
   .message-out {
-    background: rgba(173, 198, 255, 0.2);
-    border: 1px solid #adc6ff;
+    background: var(--color-primary-container);
+    border: 1px solid var(--color-primary-fixed);
   }
   .status-glow-online {
-    box-shadow: 0 0 8px #adc6ff;
+    box-shadow: 0 0 8px var(--color-primary-fixed);
   }
   .status-glow-away {
-    box-shadow: 0 0 8px #ffb2b7;
+    box-shadow: 0 0 8px var(--color-tertiary-fixed);
+  }
+  
+  .glass-panel {
+      @apply bg-surface/80 backdrop-blur-xl border border-outline-variant/20 shadow-xl shadow-surface-dim/40 rounded-xl;
+  }
+  .input-field {
+      @apply w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-3 text-on-surface font-body focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all duration-200 placeholder-on-surface-variant/50;
+  }
+  .btn-primary {
+      @apply w-full bg-primary text-on-primary font-label rounded-lg py-3 px-4 hover:bg-primary-dim active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2;
+  }
+  .btn-ghost {
+      @apply text-primary font-label hover:text-primary-dim transition-colors duration-200;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(171, 180, 172, 0.4);
+      border-radius: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(171, 180, 172, 0.6);
+  }
+  
+  .bg-chat-pattern {
+    background-color: var(--color-surface-container-low);
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23386948' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   }
 }

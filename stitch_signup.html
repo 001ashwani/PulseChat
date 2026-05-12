@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+
+<html class="" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PulseChat - Create Account</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,200..900;1,7..72,200..900&amp;family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "secondary": "#665e53",
+                "secondary-dim": "#595248",
+                "on-tertiary-container": "#614b18",
+                "primary-fixed": "#b9efc5",
+                "primary-dim": "#2b5d3c",
+                "surface-container-high": "#e3eae2",
+                "on-secondary-fixed": "#453e34",
+                "error-container": "#fa746f",
+                "on-primary-fixed": "#15482a",
+                "on-secondary": "#fff8f2",
+                "error": "#a83836",
+                "surface-container": "#e9f0e8",
+                "on-error": "#fff7f6",
+                "on-surface-variant": "#59615a",
+                "primary-fixed-dim": "#abe1b7",
+                "outline-variant": "#abb4ac",
+                "on-primary-fixed-variant": "#346544",
+                "on-primary-container": "#2a5b3b",
+                "surface-container-lowest": "#ffffff",
+                "inverse-primary": "#bef5ca",
+                "tertiary-dim": "#67501c",
+                "on-background": "#2c342e",
+                "on-tertiary-fixed": "#4d3806",
+                "tertiary-fixed": "#fad998",
+                "inverse-on-surface": "#9a9e99",
+                "primary-container": "#b9efc5",
+                "secondary-container": "#ece1d3",
+                "surface-bright": "#f7faf4",
+                "on-secondary-fixed-variant": "#625a50",
+                "secondary-fixed": "#ece1d3",
+                "tertiary": "#745c27",
+                "on-surface": "#2c342e",
+                "tertiary-fixed-dim": "#ebcb8b",
+                "inverse-surface": "#0b0f0c",
+                "on-tertiary": "#fff8f1",
+                "on-error-container": "#6e0a12",
+                "surface-dim": "#d3dcd3",
+                "surface-tint": "#386948",
+                "outline": "#747d75",
+                "on-secondary-container": "#585146",
+                "on-primary": "#e8ffe9",
+                "surface-container-low": "#f0f5ee",
+                "primary": "#386948",
+                "background": "#f7faf4",
+                "secondary-fixed-dim": "#ded3c5",
+                "surface-variant": "#dce5db",
+                "on-tertiary-fixed-variant": "#6c5421",
+                "surface-container-highest": "#dce5db",
+                "tertiary-container": "#fad998",
+                "error-dim": "#67040d",
+                "surface": "#f7faf4"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+        },
+        "spacing": {
+                      "lg": "24px",
+                      "xl": "40px",
+                      "container-margin": "24px",
+                      "xs": "4px",
+                      "md": "16px",
+                      "sm": "8px",
+                      "unit": "4px",
+                      "gutter": "16px"
+              },
+        "fontFamily": {
+                "headline": [
+                        "Literata"
+                ],
+                "display": [
+                        "Literata"
+                ],
+                "body": [
+                        "Nunito Sans"
+                ],
+                "label": [
+                        "Nunito Sans"
+                ]
+        },
+        "fontSize": {
+                      "label-sm": ["12px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                      "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                      "body-lg": ["18px", {"lineHeight": "1.7", "fontWeight": "400"}],
+                      "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                      "display": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "label-md": ["14px", {"lineHeight": "1.4", "letterSpacing": "0.01em", "fontWeight": "500"}]
+              }
+},
+    },
+  }
+</script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .glass-panel {
+                @apply bg-surface/80 backdrop-blur-xl border border-outline-variant/20 shadow-xl shadow-surface-dim/40 rounded-xl;
+            }
+            .input-field {
+                @apply w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-3 text-on-surface font-body focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all duration-200 placeholder-on-surface-variant/50;
+            }
+            .btn-primary {
+                @apply w-full bg-primary text-on-primary font-label rounded-lg py-3 px-4 hover:bg-primary-dim active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2;
+            }
+            .btn-ghost {
+                @apply text-primary font-label hover:text-primary-dim transition-colors duration-200;
+            }
+        }
+    </style>
+</head>
+<body class="bg-background min-h-screen flex items-center justify-center relative overflow-hidden antialiased text-on-background font-body">
+<div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+<div class="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-primary/5 blur-[120px]"></div>
+<div class="absolute bottom-[10%] -right-[10%] w-[40%] h-[40%] rounded-full bg-tertiary/5 blur-[100px]"></div>
+</div>
+<main class="w-full max-w-md px-lg z-10 relative">
+<div class="glass-panel p-xl flex flex-col items-center">
+<div class="mb-lg flex flex-col items-center">
+<img alt="PulseChat Logo" class="w-16 h-16 rounded-xl shadow-lg mb-sm border border-outline-variant/10 object-cover" data-alt="A natural, earthy app icon. The icon features a stylized leaf motif in shades of deep green and warm ochre. The color palette is composed of natural greens and earth tones. The design is clean, organic, and utilizes soft lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhNhfvXg4-vO9cohwdTdO_iWWUzLTUTaAClNzxf8dJE654kep8anrx_H7ihigcgby9kxgnTaZdab9aej12wv8hmypUgcG7DcX0H26BmpO06qiyHcwbEdmkyIAu7uXDEfzsTwX7gbQA-D_-3tGvgMJfTePtrzZob3cT8AJAlZWvnnbo8VfQf57puPkDPYoIpuH_rCiJW76W3DixyA2MxbK8lZ7HEqYMp6H0yUSRDc5zNYZwno4WjJPiRqRFC_hXIGQX1mmqf3p_l0Pa"/>
+<h1 class="font-headline text-headline-lg text-primary text-center tracking-tight">PulseChat</h1>
+<p class="font-body text-body-md text-on-surface-variant text-center mt-xs">Join the network.</p>
+</div>
+<form class="w-full space-y-md">
+<div class="space-y-sm">
+<label class="font-label text-label-sm text-on-surface-variant block" for="fullname">Full Name</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50 pointer-events-none">person</span>
+<input class="input-field pl-10" id="fullname" placeholder="Jane Doe" required="" type="text"/>
+</div>
+</div>
+<div class="space-y-sm">
+<label class="font-label text-label-sm text-on-surface-variant block" for="email">Email Address</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50 pointer-events-none">mail</span>
+<input class="input-field pl-10" id="email" placeholder="jane@example.com" required="" type="email"/>
+</div>
+</div>
+<div class="space-y-sm">
+<label class="font-label text-label-sm text-on-surface-variant block" for="password">Password</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50 pointer-events-none">lock</span>
+<input class="input-field pl-10" id="password" placeholder="••••••••" required="" type="password"/>
+</div>
+</div>
+<div class="space-y-sm">
+<label class="font-label text-label-sm text-on-surface-variant block" for="confirm_password">Confirm Password</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50 pointer-events-none">lock_reset</span>
+<input class="input-field pl-10" id="confirm_password" placeholder="••••••••" required="" type="password"/>
+</div>
+</div>
+<div class="pt-sm">
+<button class="btn-primary" type="submit">
+<span>Create Account</span>
+</button>
+</div>
+</form>
+<div class="mt-lg text-center">
+<p class="font-body text-body-md text-on-surface-variant">
+                    Already have an account? <a class="btn-ghost ml-1" href="#">Sign in</a>
+</p>
+</div>
+</div>
+</main>
+</body></html>

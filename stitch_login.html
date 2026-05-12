@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Login - PulseChat</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Theme Configuration -->
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "secondary": "#665e53",
+                "secondary-dim": "#595248",
+                "on-tertiary-container": "#614b18",
+                "primary-fixed": "#b9efc5",
+                "primary-dim": "#2b5d3c",
+                "surface-container-high": "#e3eae2",
+                "on-secondary-fixed": "#453e34",
+                "error-container": "#fa746f",
+                "on-primary-fixed": "#15482a",
+                "on-secondary": "#fff8f2",
+                "error": "#a83836",
+                "surface-container": "#e9f0e8",
+                "on-error": "#fff7f6",
+                "on-surface-variant": "#59615a",
+                "primary-fixed-dim": "#abe1b7",
+                "outline-variant": "#abb4ac",
+                "on-primary-fixed-variant": "#346544",
+                "on-primary-container": "#2a5b3b",
+                "surface-container-lowest": "#ffffff",
+                "inverse-primary": "#bef5ca",
+                "tertiary-dim": "#67501c",
+                "on-background": "#2c342e",
+                "on-tertiary-fixed": "#4d3806",
+                "tertiary-fixed": "#fad998",
+                "inverse-on-surface": "#9a9e99",
+                "primary-container": "#b9efc5",
+                "secondary-container": "#ece1d3",
+                "surface-bright": "#f7faf4",
+                "on-secondary-fixed-variant": "#625a50",
+                "secondary-fixed": "#ece1d3",
+                "tertiary": "#745c27",
+                "on-surface": "#2c342e",
+                "tertiary-fixed-dim": "#ebcb8b",
+                "inverse-surface": "#0b0f0c",
+                "on-tertiary": "#fff8f1",
+                "on-error-container": "#6e0a12",
+                "surface-dim": "#d3dcd3",
+                "surface-tint": "#386948",
+                "outline": "#747d75",
+                "on-secondary-container": "#585146",
+                "on-primary": "#e8ffe9",
+                "surface-container-low": "#f0f5ee",
+                "primary": "#386948",
+                "background": "#f7faf4",
+                "secondary-fixed-dim": "#ded3c5",
+                "surface-variant": "#dce5db",
+                "on-tertiary-fixed-variant": "#6c5421",
+                "surface-container-highest": "#dce5db",
+                "tertiary-container": "#fad998",
+                "error-dim": "#67040d",
+                "surface": "#f7faf4"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+        },
+        "fontFamily": {
+                "headline": [
+                        "Literata"
+                ],
+                "display": [
+                        "Literata"
+                ],
+                "body": [
+                        "Nunito Sans"
+                ],
+                "label": [
+                        "Nunito Sans"
+                ]
+        }
+      }
+    }
+  }
+</script>
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,200..900;1,7..72,200..900&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap');
+    </style>
+</head>
+<body class="bg-background text-on-background font-body text-base min-h-screen flex items-center justify-center relative overflow-hidden">
+<!-- Ambient Gradient Background Elements -->
+<div class="absolute top-[-15%] left-[-10%] w-[600px] h-[600px] bg-primary-container/40 rounded-full blur-[120px] pointer-events-none"></div>
+<div class="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-secondary-container/40 rounded-full blur-[100px] pointer-events-none"></div>
+<!-- Glassmorphic Login Card -->
+<main class="relative w-full max-w-[420px] mx-6 p-10 bg-surface/80 backdrop-blur-[12px] border border-outline-variant/20 rounded-xl shadow-lg flex flex-col gap-10 z-10 transition-transform duration-500 ease-out">
+<!-- Header -->
+<header class="flex flex-col items-center gap-4 text-center">
+<div class="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant/20 shadow-sm">
+<img alt="PulseChat Logo" class="h-10 w-10 object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3sIxcNMjGxoZPesBuSOvY1reIoy7lg0OA0Qo96ndR2WSzN4pIUrNxOWlzTIslO09w2TMVZBpMVDKmAAqLHcAb1fe5LGAezf9A7_EX49KDsIzJo8zpqpmLgEW-m2rKcFaUMRILlWbJCaieSlqURO8NzbaS1QlB_ill9p6NwXJopQWeFxaLMAh7oglKz65v0A8hxbZazzIQ-eheOpA0YorOnTtT1p8DkcbsCFAygLH-YHvGFZ7PNUDQQaCySCMLuSZ7phivJaZKMOtN"/>
+</div>
+<div>
+<h1 class="font-headline text-3xl text-primary tracking-tight font-semibold">Welcome Back</h1>
+<p class="font-body text-base text-on-surface-variant mt-1">Sign in to continue to PulseChat</p>
+</div>
+</header>
+<!-- Login Form -->
+<form class="flex flex-col gap-6">
+<!-- Email Input -->
+<div class="flex flex-col gap-1 group">
+<label class="font-label text-sm text-on-surface-variant ml-2 transition-colors group-focus-within:text-primary font-medium" for="email">Email Address</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant group-focus-within:text-primary transition-colors pointer-events-none" style="font-variation-settings: 'FILL' 0;">mail</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant/50 rounded-lg py-4 pl-10 pr-4 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-200 font-body text-base placeholder-outline/60 shadow-sm" id="email" placeholder="name@company.com" required="" type="email"/>
+</div>
+</div>
+<!-- Password Input -->
+<div class="flex flex-col gap-1 group">
+<div class="flex justify-between items-center ml-2 mr-1">
+<label class="font-label text-sm text-on-surface-variant transition-colors group-focus-within:text-primary font-medium" for="password">Password</label>
+<a class="font-label text-xs text-primary hover:text-primary-dim transition-colors font-semibold" href="#">Forgot?</a>
+</div>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant group-focus-within:text-primary transition-colors pointer-events-none" style="font-variation-settings: 'FILL' 0;">lock</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant/50 rounded-lg py-4 pl-10 pr-4 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-200 font-body text-base placeholder-outline/60 shadow-sm" id="password" placeholder="••••••••" required="" type="password"/>
+</div>
+</div>
+<!-- Options -->
+<div class="flex items-center mt-1">
+<label class="flex items-center gap-2 cursor-pointer group">
+<div class="relative flex items-center justify-center">
+<input class="peer appearance-none w-5 h-5 bg-surface-container-lowest border border-outline-variant/50 rounded text-primary focus:ring-primary focus:ring-offset-0 focus:border-primary transition-all duration-200 checked:bg-primary checked:border-primary cursor-pointer" type="checkbox"/>
+<span class="material-symbols-outlined absolute text-on-primary text-[14px] opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity duration-200" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+<span class="font-label text-sm text-on-surface-variant group-hover:text-on-surface transition-colors select-none">Remember me</span>
+</label>
+</div>
+<!-- Submit Action -->
+<button class="w-full mt-2 py-4 px-6 rounded-lg bg-gradient-to-r from-primary to-primary-dim text-on-primary font-label text-sm font-bold shadow-md shadow-primary/20 border border-outline-variant/10 hover:shadow-primary/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex justify-center items-center gap-2" type="submit">
+<span>Sign In</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</form>
+<!-- Footer -->
+<footer class="text-center pt-4 border-t border-outline-variant/20">
+<p class="font-label text-sm text-on-surface-variant">
+                Don't have an account? <a class="text-primary font-bold hover:text-primary-dim transition-colors" href="#">Request access</a>
+</p>
+</footer>
+</main>
+</body></html>

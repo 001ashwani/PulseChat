@@ -33,126 +33,87 @@ export default function Login() {
   };
 
   return (
-    <div className="bg-background text-on-surface flex items-center justify-center min-h-screen relative w-full">
-      {/* Ambient Background Decor */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-secondary/5 blur-[150px] rounded-full"></div>
-      </div>
+    <div className="bg-background text-on-background font-body text-base min-h-screen flex items-center justify-center relative overflow-hidden">
+      {/* Ambient Gradient Background Elements */}
+      <div className="absolute top-[-15%] left-[-10%] w-[600px] h-[600px] bg-primary-container/40 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-secondary-container/40 rounded-full blur-[100px] pointer-events-none"></div>
 
-      <main className="w-full max-w-[420px] px-margin-mobile relative z-10 flex flex-col items-center">
-        {/* Logo & Header */}
-        <div className="mb-xl flex flex-col items-center text-center">
-          <div className="w-16 h-16 glass-card rounded-2xl flex items-center justify-center mb-md border border-white/20">
-            <span className="material-symbols-outlined text-primary text-[40px]" style={{ fontVariationSettings: "'FILL' 1" }}>chat_bubble</span>
+      {/* Glassmorphic Login Card */}
+      <main className="relative w-full max-w-[420px] mx-6 p-10 bg-surface/80 backdrop-blur-[12px] border border-outline-variant/20 rounded-xl shadow-lg flex flex-col gap-10 z-10 transition-transform duration-500 ease-out">
+        {/* Header */}
+        <header className="flex flex-col items-center gap-4 text-center">
+          <div className="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant/20 shadow-sm">
+            <span className="material-symbols-outlined text-primary text-[32px]" style={{ fontVariationSettings: "'FILL' 1" }}>chat_bubble</span>
           </div>
-          <h1 className="font-display-lg text-display-lg text-on-surface tracking-tight mb-xs">PulseChat</h1>
-          <p className="font-body-md text-on-surface-variant/60">Welcome back to the sanctuary.</p>
-        </div>
+          <div>
+            <h1 className="font-headline text-3xl text-primary tracking-tight font-semibold">Welcome Back</h1>
+            <p className="font-body text-base text-on-surface-variant mt-1">Sign in to continue to PulseChat</p>
+          </div>
+        </header>
 
-        {/* Login Form Card */}
-        <div className="glass-card w-full rounded-[32px] p-8 mb-lg">
-          <header className="mb-lg">
-            <h2 className="font-headline-md text-headline-md text-on-surface">Sign In</h2>
-            <div className="h-1 w-8 bg-primary rounded-full mt-2"></div>
-          </header>
-
-          <form className="space-y-md" onSubmit={handleSubmit}>
-            {/* Email */}
-            <div className="space-y-xs">
-              <label className="font-label-sm text-label-sm text-on-surface-variant/80 px-1" htmlFor="email">Email Address</label>
-              <div className="relative">
-                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/40 text-[20px]">mail</span>
-                <input
-                  id="email" name="email" type="email" autoComplete="email"
-                  value={form.email} onChange={handleChange}
-                  className="glass-input w-full h-14 pl-12 pr-4 rounded-xl font-body-lg text-body-lg text-on-surface placeholder:text-on-surface-variant/30"
-                  placeholder="name@example.com"
-                />
-              </div>
+        {/* Login Form */}
+        <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+          {/* Email Input */}
+          <div className="flex flex-col gap-1 group">
+            <label className="font-label text-sm text-on-surface-variant ml-2 transition-colors group-focus-within:text-primary font-medium" htmlFor="email">Email Address</label>
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant group-focus-within:text-primary transition-colors pointer-events-none" style={{ fontVariationSettings: "'FILL' 0" }}>mail</span>
+              <input
+                id="email" name="email" type="email" autoComplete="email" required
+                value={form.email} onChange={handleChange}
+                className="w-full bg-surface-container-lowest border border-outline-variant/50 rounded-lg py-4 pl-10 pr-4 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-200 font-body text-base placeholder-outline/60 shadow-sm"
+                placeholder="name@example.com"
+              />
             </div>
+          </div>
 
-            {/* Password */}
-            <div className="space-y-xs">
-              <div className="flex justify-between items-center px-1">
-                <label className="font-label-sm text-label-sm text-on-surface-variant/80" htmlFor="password">Password</label>
-              </div>
-              <div className="relative">
-                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/40 text-[20px]">lock</span>
-                <input
-                  id="password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password"
-                  value={form.password} onChange={handleChange}
-                  className="glass-input w-full h-14 pl-12 pr-12 rounded-xl font-body-lg text-body-lg text-on-surface placeholder:text-on-surface-variant/30"
-                  placeholder="••••••••"
-                />
-                <button type="button" onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant/40 hover:text-on-surface-variant transition-colors">
-                  <span className="material-symbols-outlined text-[20px]">{showPassword ? 'visibility_off' : 'visibility'}</span>
-                </button>
-              </div>
+          {/* Password Input */}
+          <div className="flex flex-col gap-1 group">
+            <div className="flex justify-between items-center ml-2 mr-1">
+              <label className="font-label text-sm text-on-surface-variant transition-colors group-focus-within:text-primary font-medium" htmlFor="password">Password</label>
+              <a className="font-label text-xs text-primary hover:text-primary-dim transition-colors font-semibold" href="#">Forgot?</a>
             </div>
-
-            {/* Submit */}
-            <button
-              type="submit" disabled={loading}
-              className="w-full h-14 bg-primary text-on-primary font-body-lg font-bold rounded-xl primary-glow active:scale-[0.98] transition-all duration-200 mt-lg disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
-                  Signing in...
-                </>
-              ) : 'Sign In'}
-            </button>
-          </form>
-
-          {/* Divider */}
-          <div className="flex items-center my-lg">
-            <div className="flex-1 h-[1px] bg-white/10"></div>
-            <span className="px-4 font-label-sm text-label-sm text-on-surface-variant/40">OR CONTINUE WITH</span>
-            <div className="flex-1 h-[1px] bg-white/10"></div>
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant group-focus-within:text-primary transition-colors pointer-events-none" style={{ fontVariationSettings: "'FILL' 0" }}>lock</span>
+              <input
+                id="password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required
+                value={form.password} onChange={handleChange}
+                className="w-full bg-surface-container-lowest border border-outline-variant/50 rounded-lg py-4 pl-10 pr-12 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-200 font-body text-base placeholder-outline/60 shadow-sm"
+                placeholder="••••••••"
+              />
+              <button type="button" onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-outline-variant hover:text-primary transition-colors">
+                <span className="material-symbols-outlined text-[20px]">{showPassword ? 'visibility_off' : 'visibility'}</span>
+              </button>
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-md">
-            <button className="glass-input h-12 rounded-xl flex items-center justify-center gap-sm hover:bg-white/10 transition-colors">
-              <img alt="Google" className="w-4 h-4" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBp7pgxGH2SKMudiZg_XqGv9BkcfhXhJGNvz4ZN8kXA_gn4zYqtOxff70J2xye6u0uS3-J4DjP7e9OPg0Eqy8TdxQcaAaUZovZPTHFSgChmzy7zwwZn192T_YdCkz7ZkGBhmcb68lVh3pcqjzCnJa5ppkkyxGXR_Dq4cZbIOzu1O2B2Ez6Pndrh46wpoUV-I8lq5gnqZTslhraOQcSL08ESocgDwO7IcU-n08DUS6t_82YuAbFY_ggh1vnsR72Mxtejz7OeSO7E3UX3"/>
-              <span className="font-label-sm text-on-surface">Google</span>
-            </button>
-            <button className="glass-input h-12 rounded-xl flex items-center justify-center gap-sm hover:bg-white/10 transition-colors">
-              <span className="material-symbols-outlined text-[20px]">ios</span>
-              <span className="font-label-sm text-on-surface">Apple</span>
-            </button>
-          </div>
-        </div>
+
+          {/* Submit Action */}
+          <button
+            type="submit" disabled={loading}
+            className="w-full mt-2 py-4 px-6 rounded-lg bg-gradient-to-r from-primary to-primary-dim text-on-primary font-label text-sm font-bold shadow-md shadow-primary/20 border border-outline-variant/10 hover:shadow-primary/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex justify-center items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <>
+                <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
+                Signing in...
+              </>
+            ) : (
+              <>
+                <span>Sign In</span>
+                <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+              </>
+            )}
+          </button>
+        </form>
 
         {/* Footer */}
-        <div className="text-center pb-8">
-          <p className="font-body-md text-body-md text-on-surface-variant/60">
-            New to the community?{' '}
-            <Link to="/register" className="text-primary font-bold hover:underline decoration-primary/30 underline-offset-4 ml-1">Sign Up</Link>
+        <footer className="text-center pt-4 border-t border-outline-variant/20">
+          <p className="font-label text-sm text-on-surface-variant">
+            Don't have an account? <Link className="text-primary font-bold hover:text-primary-dim transition-colors" to="/register">Sign Up</Link>
           </p>
-        </div>
+        </footer>
       </main>
-
-      {/* Decorative card */}
-      <div className="hidden lg:block absolute bottom-12 right-12 w-64 h-64 glass-card rounded-[40px] rotate-6 overflow-hidden">
-        <div className="p-6">
-          <div className="flex items-center gap-md mb-md">
-            <div className="w-10 h-10 rounded-full border-2 border-primary bg-surface overflow-hidden">
-              <img alt="Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDn7hzXeayR2u9T2dnNJDZCSl_-GsVNOAduSWOjRtJyrlTipfmcrOCf4ERCZkGYCKyhaa-bWRd5OHy8-sUoUqlV30g4QK6GA2G41QN1jf6ANVMTLdvEDCRNeN7xqbRnqgLSx8IYcC_OPGq7eRQCZCZVDnj7oqWHjovvYafK7GGNPOjRHbwDPwse0SqBwMKCxs37MEsu_tosVJPTceQ6cvYT6-HPvB-wHJEHPkVXSTW7UIRbibyJdgRgBu8dbyJ53XPG7D6n39HzhaFY"/>
-            </div>
-            <div>
-              <div className="w-20 h-2 bg-white/20 rounded-full mb-1"></div>
-              <div className="w-12 h-2 bg-white/10 rounded-full"></div>
-            </div>
-          </div>
-          <div className="space-y-sm">
-            <div className="w-full h-3 bg-primary/20 rounded-full"></div>
-            <div className="w-4/5 h-3 bg-white/10 rounded-full"></div>
-            <div className="w-2/3 h-3 bg-white/10 rounded-full"></div>
-          </div>
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 to-transparent"></div>
-      </div>
     </div>
   );
 }

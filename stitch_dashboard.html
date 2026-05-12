@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PulseChat - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,200..900;1,7..72,200..900&amp;family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "secondary": "#665e53",
+                "secondary-dim": "#595248",
+                "on-tertiary-container": "#614b18",
+                "primary-fixed": "#b9efc5",
+                "primary-dim": "#2b5d3c",
+                "surface-container-high": "#e3eae2",
+                "on-secondary-fixed": "#453e34",
+                "error-container": "#fa746f",
+                "on-primary-fixed": "#15482a",
+                "on-secondary": "#fff8f2",
+                "error": "#a83836",
+                "surface-container": "#e9f0e8",
+                "on-error": "#fff7f6",
+                "on-surface-variant": "#59615a",
+                "primary-fixed-dim": "#abe1b7",
+                "outline-variant": "#abb4ac",
+                "on-primary-fixed-variant": "#346544",
+                "on-primary-container": "#2a5b3b",
+                "surface-container-lowest": "#ffffff",
+                "inverse-primary": "#bef5ca",
+                "tertiary-dim": "#67501c",
+                "on-background": "#2c342e",
+                "on-tertiary-fixed": "#4d3806",
+                "tertiary-fixed": "#fad998",
+                "inverse-on-surface": "#9a9e99",
+                "primary-container": "#b9efc5",
+                "secondary-container": "#ece1d3",
+                "surface-bright": "#f7faf4",
+                "on-secondary-fixed-variant": "#625a50",
+                "secondary-fixed": "#ece1d3",
+                "tertiary": "#745c27",
+                "on-surface": "#2c342e",
+                "tertiary-fixed-dim": "#ebcb8b",
+                "inverse-surface": "#0b0f0c",
+                "on-tertiary": "#fff8f1",
+                "on-error-container": "#6e0a12",
+                "surface-dim": "#d3dcd3",
+                "surface-tint": "#386948",
+                "outline": "#747d75",
+                "on-secondary-container": "#585146",
+                "on-primary": "#e8ffe9",
+                "surface-container-low": "#f0f5ee",
+                "primary": "#386948",
+                "background": "#f7faf4",
+                "secondary-fixed-dim": "#ded3c5",
+                "surface-variant": "#dce5db",
+                "on-tertiary-fixed-variant": "#6c5421",
+                "surface-container-highest": "#dce5db",
+                "tertiary-container": "#fad998",
+                "error-dim": "#67040d",
+                "surface": "#f7faf4"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+        },
+        "spacing": {
+            "lg": "24px",
+            "xl": "40px",
+            "xs": "4px",
+            "md": "16px",
+            "sm": "8px"
+        },
+        "fontFamily": {
+                "headline": [
+                        "Literata"
+                ],
+                "display": [
+                        "Literata"
+                ],
+                "body": [
+                        "Nunito Sans"
+                ],
+                "label": [
+                        "Nunito Sans"
+                ]
+        },
+        "fontSize": {}
+},
+    },
+  }
+</script>
+</head>
+<body class="bg-background text-on-background font-body text-base h-screen overflow-hidden flex selection:bg-primary-container selection:text-on-primary-container relative">
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-0 h-full w-[280px] flex flex-col p-lg border-r border-outline-variant/30 shadow-sm bg-surface z-20 transition-transform duration-300 md:translate-x-0 -translate-x-full">
+<div class="mb-xl">
+<h1 class="font-display text-4xl font-bold text-primary tracking-tight">PulseChat</h1>
+<p class="font-label text-sm text-on-surface-variant mt-xs">Connected</p>
+</div>
+<button class="w-full bg-primary text-on-primary font-label text-sm font-bold py-3 px-md rounded-lg shadow-sm hover:bg-primary-dim active:scale-95 transition-all duration-200 flex items-center justify-center gap-sm mb-lg">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+            New Chat
+        </button>
+<div class="flex-1 overflow-y-auto space-y-2 pr-sm custom-scrollbar">
+<a class="text-on-primary-container font-bold flex items-center gap-4 py-3 px-4 rounded-lg bg-primary-container active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span>
+<span class="font-label text-sm">Chats</span>
+</a>
+<a class="text-on-surface-variant flex items-center gap-4 py-3 px-4 rounded-lg hover:bg-surface-variant/50 hover:text-on-surface transition-all duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">group</span>
+<span class="font-label text-sm">Contacts</span>
+</a>
+<a class="text-on-surface-variant flex items-center gap-4 py-3 px-4 rounded-lg hover:bg-surface-variant/50 hover:text-on-surface transition-all duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">call</span>
+<span class="font-label text-sm">Calls</span>
+</a>
+<a class="text-on-surface-variant flex items-center gap-4 py-3 px-4 rounded-lg hover:bg-surface-variant/50 hover:text-on-surface transition-all duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+<span class="font-label text-sm">Settings</span>
+</a>
+</div>
+<div class="mt-auto pt-lg border-t border-outline-variant/30 space-y-2">
+<a class="text-on-surface-variant flex items-center gap-4 py-3 px-4 rounded-lg hover:bg-surface-variant/50 hover:text-on-surface transition-all duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">account_circle</span>
+<span class="font-label text-sm">Profile</span>
+</a>
+<a class="text-on-surface-variant flex items-center gap-4 py-3 px-4 rounded-lg hover:bg-surface-variant/50 hover:text-on-surface transition-all duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">logout</span>
+<span class="font-label text-sm">Logout</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col md:ml-[280px] w-full md:w-[calc(100%-280px)] h-full">
+<!-- TopAppBar -->
+<header class="docked full-width top-0 bg-surface border-b border-outline-variant/30 flex justify-between items-center px-lg py-md z-10 shadow-sm">
+<div class="flex items-center gap-lg">
+<button class="md:hidden text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="hidden md:flex bg-surface-container border border-outline-variant/30 rounded-full px-4 py-2 items-center gap-2 focus-within:border-primary transition-colors w-64">
+<span class="material-symbols-outlined text-outline text-sm">search</span>
+<input class="bg-transparent border-none outline-none text-on-surface font-label text-sm w-full placeholder-outline focus:ring-0 p-0" placeholder="Search..." type="text"/>
+</div>
+</div>
+<div class="flex gap-lg items-center">
+<nav class="hidden md:flex gap-md font-label text-sm">
+<a class="text-primary border-b-2 border-primary pb-1 font-bold cursor-pointer transition-opacity active:opacity-70" href="#">Recent</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-70" href="#">Pinned</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-70" href="#">Groups</a>
+</nav>
+</div>
+<div class="flex items-center gap-md">
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-70">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-70">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">more_vert</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/30">
+<img alt="Current user" class="w-full h-full object-cover" data-alt="A close-up, high-fidelity profile portrait of a modern professional in a softly lit, dark tech environment. The lighting features a cool blue rim light, fitting the glassmorphic, high-performance UI aesthetic. The mood is calm and focused." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDlF806UxMyiY3MexkEaT6uFKFr_a1uLHd88bOjHw7O2H9AwS1pNIdybzldORfjBvIkcbi-1p-0moaznyzR7PbXrtYGdrQKed_nVRrqvUri1iWkRwC0qb4KnCyU1nCGy75uqbaDixCPlvr1xvTnP564g0HXABrNhOt5FzZEYzZtQSR1sEPHQ6APJl2I3ktas-FJZs-Ow3m-pZzhja5jLAeNr5Id54ZeVp-5bBYov6mQ9A2vOOs8DQEGa4j_g5oAAzJSyjEH91poUZ1k"/>
+</div>
+</div>
+</header>
+<div class="flex-1 flex overflow-hidden bg-surface-container-lowest">
+<!-- Left Chat List Column -->
+<aside class="w-[320px] hidden lg:flex flex-col border-r border-outline-variant/30 bg-surface-container-lowest h-full">
+<div class="p-md border-b border-outline-variant/20">
+<div class="flex justify-between items-center mb-sm">
+<h2 class="font-headline text-2xl font-bold text-on-surface">Messages</h2>
+<span class="bg-primary-container text-on-primary-container px-2 py-1 rounded-full font-label text-xs font-bold">4 New</span>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar">
+<!-- Chat Item 1 -->
+<div class="p-md border-b border-outline-variant/10 hover:bg-surface-container cursor-pointer transition-colors flex gap-md items-start group">
+<div class="relative flex-shrink-0">
+<div class="w-12 h-12 rounded-full overflow-hidden border border-outline-variant/30 group-hover:border-primary transition-colors">
+<img alt="Alex Chen" class="w-full h-full object-cover" data-alt="A polished profile picture of a young male developer in a moody, low-light setting with a subtle neon blue glow in the background. The aesthetic is clean, modern, and tech-forward." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkf1dwBEk1iNlHoErCX3EnQLJ8H9Uvv78-MOlTAy3368m9DsZz8kJOlJbw33PkUnyHLj-39KJuUrTIsZsSxnTjIwbJbAlvNV5mhf9HePjJRjK1K4gJ0Vm7rMtAmww7oGNCriqbcGNxrvuDxS3gVQT7nmjapvHKg8Qt1MsVRqTeBopasUeoW-5rFfSWd1VPWmHFuFecUZolaW7iTQ219p77UUNIpJ2zMEj3h-LBjqrk6c4qvqM1FX06wbg3TJQq-5WRlB3a1ouKHl1e"/>
+</div>
+<div class="absolute bottom-0 right-0 w-3 h-3 bg-primary rounded-full border-2 border-surface-container-lowest"></div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-baseline mb-xs">
+<h3 class="font-label text-sm text-on-surface font-bold truncate">Alex Chen</h3>
+<span class="font-label text-xs text-primary">10:42 AM</span>
+</div>
+<p class="font-body text-sm text-on-surface-variant truncate">Are the new API endpoints deployed?</p>
+</div>
+<div class="w-5 h-5 bg-primary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+<span class="font-label text-[10px] text-on-primary font-bold">2</span>
+</div>
+</div>
+<!-- Chat Item 2 (Active) -->
+<div class="p-md border-l-4 border-primary bg-surface-container cursor-pointer flex gap-md items-start">
+<div class="relative flex-shrink-0">
+<div class="w-12 h-12 rounded-full overflow-hidden border-2 border-primary">
+<img alt="Sarah Jenkins" class="w-full h-full object-cover" data-alt="A professional headshot of a female designer in a dark-themed studio environment. Soft gradient lighting in blues and purples reflects off her surroundings, matching the glassmorphic app style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDTDGTFxAFXZRfM1vEFm_76Nghl8lMJZq-i-73R5vyfEXI2OI8OGx1Ky47X3nlrggjsBNBk92VDwLoWGEW3qICSMEwF4xUw2QHQpCqxresCKOyruwCuQz2HSgDvJruhmQw9PiimLzTgjdKM3srGS3sRZKNeCJjpJtV1isvQ_9sVv_xgCztHxmXBtlWjkoeYr44fwMoqaFBILjPfmEYkuyLYhBM6_zBweTrrqlhYHPh7RS-r5BTVhEYASbvp8J0pMntn9ru6iP69kUQ"/>
+</div>
+<div class="absolute bottom-0 right-0 w-3 h-3 bg-primary rounded-full border-2 border-surface-container"></div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-baseline mb-xs">
+<h3 class="font-label text-sm text-on-surface font-bold truncate">Sarah Jenkins</h3>
+<span class="font-label text-xs text-on-surface-variant">09:15 AM</span>
+</div>
+<p class="font-body text-sm text-on-surface truncate font-medium">I've updated the Figma files with the new tokens.</p>
+</div>
+</div>
+<!-- Chat Item 3 -->
+<div class="p-md border-b border-outline-variant/10 hover:bg-surface-container cursor-pointer transition-colors flex gap-md items-start group">
+<div class="relative flex-shrink-0">
+<div class="w-12 h-12 rounded-full overflow-hidden border border-outline-variant/30 group-hover:border-primary transition-colors">
+<img alt="Dev Team Alpha" class="w-full h-full object-cover" data-alt="An abstract, stylized group avatar featuring interconnected glowing nodes in a deep blue and charcoal matrix, representing a highly technical development team." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7NCaWCjSE4A7_e8NMzI0Xe4KEtusJigcawKu2cxtxVQbFcns_Q8UI3T8yp4TDp5Cq0RdIVqaLRTuyqxFwLqK8Pf_qC1qifEQB9da9TtH0BGBcpeaWRZXTs681HCXne8pK5MJmjPSXscKsoQuK95oFklI0B58EXFZvrUO7JBC8LAELUuhZ_Xn9ULQXLvgZTCtSJqnQrc_G9YqB9kV6NQgKf8ZZXgjELfscrn2WyFXlGqz_8upnqI0HHk2umUYptl5Et08sWGUTd9hC"/>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-baseline mb-xs">
+<h3 class="font-label text-sm text-on-surface font-bold truncate">Dev Team Alpha</h3>
+<span class="font-label text-xs text-on-surface-variant">Yesterday</span>
+</div>
+<p class="font-body text-sm text-on-surface-variant truncate">Mark: Sounds good, let's review tomorrow.</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Center Chat Canvas -->
+<main class="flex-1 flex flex-col min-w-0 relative bg-surface-bright">
+<!-- Sticky Chat Header -->
+<div class="h-16 border-b border-outline-variant/30 bg-surface flex items-center justify-between px-md sticky top-0 z-10 shadow-sm">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant/30">
+<img alt="Sarah Jenkins" class="w-full h-full object-cover" data-alt="A professional headshot of a female designer in a dark-themed studio environment. Soft gradient lighting in blues and purples reflects off her surroundings, matching the glassmorphic app style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBvuGr8xFrv2nE7nDc0DCTipBojRNutcwqXazVPpOP_-5QsRt9YUIOwwFG-Lb6o1XsnMMsd1CKPUHcXU1FdCEMG7VHd5pt59u2mPVdNszxTpiTIMYZ_oBDqHXw84Hwgom3TFI5gQDtgFRx4pd4sZ2r7E7hBNpPWua-QXVKE1xTMlwcIB7Vo0Ame4U-kI67mirQu-ANfQ7jNGiUGt4DFDVH95kHTapmpaVVJJD3Zi5SzaZx2s6nSMyNsU95ct5JwK2Zv9Qzifj1kRZ01"/>
+</div>
+<div>
+<h2 class="font-headline text-lg text-on-surface font-bold">Sarah Jenkins</h2>
+<p class="font-label text-xs text-primary flex items-center gap-1">
+<span class="w-2 h-2 bg-primary rounded-full inline-block"></span> Online
+                            </p>
+</div>
+</div>
+<div class="flex gap-sm">
+<button class="p-2 text-on-surface-variant hover:text-primary rounded-lg hover:bg-surface-variant transition-all">
+<span class="material-symbols-outlined">videocam</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary rounded-lg hover:bg-surface-variant transition-all">
+<span class="material-symbols-outlined">call</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary rounded-lg hover:bg-surface-variant transition-all xl:hidden">
+<span class="material-symbols-outlined">info</span>
+</button>
+</div>
+</div>
+<!-- Messages Area -->
+<div class="flex-1 overflow-y-auto p-lg flex flex-col gap-md custom-scrollbar">
+<div class="text-center my-md">
+<span class="bg-surface-variant text-on-surface-variant font-label text-xs px-3 py-1 rounded-full">Today, 08:30 AM</span>
+</div>
+<!-- Receiver Message -->
+<div class="flex gap-sm max-w-[80%] self-start">
+<div class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 mt-auto border border-outline-variant/30">
+<img alt="Sarah Jenkins" class="w-full h-full object-cover" data-alt="A professional headshot of a female designer in a dark-themed studio environment. Soft gradient lighting in blues and purples reflects off her surroundings, matching the glassmorphic app style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmeddRgy2QK-irqI1MmN7NFuM6lCQUeo9omXyYLb0njWEvJfoCXVsp_DkikpAJpDt5XU4zpcwvRLOpSFC_NpJyZDyHxtfmCTfDVNBS0U3ns3W5VPWQ7kBYPaemW6q4TH5cRAyw0ZfVBpum6uMhHVmERuykLcDQpEnkBm6feOhi1F6KGqV6J9YXxZpEU0IG3ieUK-pBnKV566lQBxEcBUuctzguazgRKjvHGn4xk1OhEYBDXcfiCMTC0Uqzi3Wq-lFufoF7KZNI04A7"/>
+</div>
+<div class="bg-surface rounded-2xl rounded-bl-sm p-md shadow-sm border border-outline-variant/20">
+<p class="font-body text-base text-on-surface">Hey! Just pushed the latest design tokens to the repo. Let me know when you have a chance to look.</p>
+<span class="font-label text-[10px] text-on-surface-variant block mt-xs text-right">08:30 AM</span>
+</div>
+</div>
+<!-- Sender Message -->
+<div class="flex gap-sm max-w-[80%] self-end">
+<div class="bg-primary-container rounded-2xl rounded-br-sm p-md shadow-sm">
+<p class="font-body text-base text-on-primary-container">Awesome, thanks! I'll pull them down and integrate them into the shared components right now.</p>
+<span class="font-label text-[10px] text-primary block mt-xs text-right">08:45 AM</span>
+</div>
+</div>
+<!-- Sender Attachment -->
+<div class="flex gap-sm max-w-[80%] self-end">
+<div class="bg-primary-container rounded-2xl rounded-br-sm p-xs shadow-sm w-64 border border-primary/20">
+<div class="bg-surface-bright rounded-xl p-md flex items-center gap-md">
+<div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">description</span>
+</div>
+<div class="min-w-0">
+<p class="font-label text-sm text-on-surface font-bold truncate">tokens_v2.json</p>
+<p class="font-label text-xs text-on-surface-variant truncate">14 KB • JSON</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Receiver Message -->
+<div class="flex gap-sm max-w-[80%] self-start mt-md">
+<div class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 mt-auto border border-outline-variant/30">
+<img alt="Sarah Jenkins" class="w-full h-full object-cover" data-alt="A professional headshot of a female designer in a dark-themed studio environment. Soft gradient lighting in blues and purples reflects off her surroundings, matching the glassmorphic app style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKwoUt7Zgrn_Ca0aNKr8QcwZRKpp8kY1W7KienWygtThsn7gpWjyDad5caiWdDbnhCdgRHU5rR1wCrimD6BHUb61lAoa773qJ3KyZ4SINAycs-ShEAlkS9PrCd1KPl7x8hMY3A1dG1y6Zcop66qY3_DsHt8SKs8pKD4Fz6qo5HktsHXl6SEhFxSe1b_4eYb2jgiZZgc5v0-4ATdZcfFj8G8zcGRO-xAx44sZru2AueWfzl5oCWvJpla-3Wfedug-r7PHQ__I1v8KuI"/>
+</div>
+<div class="bg-surface rounded-2xl rounded-bl-sm p-md shadow-sm border border-outline-variant/20">
+<p class="font-body text-base text-on-surface">I've updated the Figma files with the new tokens.</p>
+<span class="font-label text-[10px] text-on-surface-variant block mt-xs text-right">09:15 AM</span>
+</div>
+</div>
+</div>
+<!-- Input Area -->
+<div class="p-md bg-surface border-t border-outline-variant/30">
+<div class="flex items-center gap-sm bg-surface-container rounded-xl p-xs border border-outline-variant/30 focus-within:border-primary transition-all">
+<button class="p-2 text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">add_circle</span>
+</button>
+<input class="flex-1 bg-transparent border-none outline-none text-on-surface font-body py-2 px-1 placeholder-outline focus:ring-0" placeholder="Type a message..." type="text"/>
+<button class="p-2 text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">mood</span>
+</button>
+<button class="p-2 bg-primary text-on-primary rounded-lg hover:bg-primary-dim transition-all flex items-center justify-center ml-1">
+<span class="material-symbols-outlined text-sm">send</span>
+</button>
+</div>
+</div>
+</main>
+<!-- Right Info Panel -->
+<aside class="w-[300px] hidden xl:flex flex-col border-l border-outline-variant/30 bg-surface-container-lowest h-full overflow-y-auto custom-scrollbar">
+<div class="p-xl flex flex-col items-center border-b border-outline-variant/20 text-center">
+<div class="w-24 h-24 rounded-full overflow-hidden border-4 border-surface shadow-sm mb-md relative">
+<img alt="Sarah Jenkins" class="w-full h-full object-cover" data-alt="A professional headshot of a female designer in a dark-themed studio environment. Soft gradient lighting in blues and purples reflects off her surroundings, matching the glassmorphic app style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXNN6hNCYYXm28veBnxBGfC4u9TISwlsETwwH5I04E3oW_RYVsPA42rsOcwU2Hdn9RSNLJ82ujpO9YMofaciafrYkfZqWalCBGWBg67zyJHvh7Et7E6HlTAAz3-5CvHBsHEB3vLm9uIovarzwdAzKXNYvDpugGa-QR9CVI4pGWpheomet66veLE19H5VtVBZ5kCiW3oowlTz_l5Xvm0maGAZdT9wj_XNn5lLHrR2wwAZCw1Yz_9hDN85JrPy0Fwf-J0B0feHxpJ92_"/>
+</div>
+<h2 class="font-headline text-xl text-on-surface font-bold">Sarah Jenkins</h2>
+<p class="font-label text-sm text-primary mt-xs">Lead Product Designer</p>
+<div class="flex gap-md mt-lg w-full justify-center">
+<div class="flex flex-col items-center bg-surface rounded-lg p-sm min-w-[80px] border border-outline-variant/20 shadow-sm">
+<span class="material-symbols-outlined text-primary mb-1">schedule</span>
+<span class="font-label text-xs text-on-surface-variant">Local Time</span>
+<span class="font-label text-sm font-bold text-on-surface mt-0.5">11:24 AM</span>
+</div>
+</div>
+</div>
+<div class="p-lg space-y-lg">
+<!-- Actions -->
+<div class="space-y-sm">
+<h3 class="font-label text-xs text-outline uppercase tracking-wider mb-sm font-bold">Settings</h3>
+<div class="flex items-center justify-between p-sm hover:bg-surface rounded-lg cursor-pointer transition-colors border border-transparent hover:border-outline-variant/20">
+<div class="flex items-center gap-3 text-on-surface">
+<span class="material-symbols-outlined text-outline">notifications_off</span>
+<span class="font-body text-sm">Mute Notifications</span>
+</div>
+<!-- Toggle Switch -->
+<div class="w-10 h-6 bg-surface-variant rounded-full relative cursor-pointer">
+<div class="absolute left-1 top-1 w-4 h-4 bg-outline rounded-full transition-transform"></div>
+</div>
+</div>
+<div class="flex items-center justify-between p-sm hover:bg-surface rounded-lg cursor-pointer transition-colors border border-transparent hover:border-outline-variant/20">
+<div class="flex items-center gap-3 text-on-surface">
+<span class="material-symbols-outlined text-outline">push_pin</span>
+<span class="font-body text-sm">Pin Conversation</span>
+</div>
+<span class="material-symbols-outlined text-outline text-sm">chevron_right</span>
+</div>
+</div>
+<!-- Shared Media -->
+<div class="space-y-sm pt-md border-t border-outline-variant/20">
+<div class="flex justify-between items-center mb-sm">
+<h3 class="font-label text-xs text-outline uppercase tracking-wider font-bold">Shared Files</h3>
+<button class="font-label text-xs text-primary hover:underline font-bold">View All</button>
+</div>
+<div class="grid grid-cols-2 gap-sm">
+<div class="aspect-square bg-surface rounded-lg border border-outline-variant/20 overflow-hidden group cursor-pointer relative">
+<img alt="UI Component" class="w-full h-full object-cover group-hover:scale-105 duration-300" data-alt="A macro shot of a digital interface showing a sleek, dark-mode toggle switch glowing with a subtle neon blue outline against a deep charcoal textured background. High detail, glassmorphic style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSZXBSMPx-KPedTc7EOIU3dI2WQkwKg2M253c7W7aG16oFGHJsS4TMA9TjMe6t4vRKlxRs34bnNrcWYPCPMUpu8DB7liqWQZlDDyQcdXYEnbbA1CAsrhCMZBozhTbl6RcEQ0iUDiS8xQfTN3kTLKOl41dj2mZ_dbiZPMtZ7Jbvk4rLgq03DHw0RVpAws1a8VPkH5owOhRBVToJ_k8rAsnzSL0pcipqckdifLqiiHOOGDm8FqKoAV27tqcgnFCmtdYUuHCz4Fb939XW"/>
+</div>
+<div class="aspect-square bg-surface rounded-lg border border-outline-variant/20 overflow-hidden group cursor-pointer relative">
+<img alt="Mockup" class="w-full h-full object-cover group-hover:scale-105 duration-300" data-alt="A stylish flat lay of a modern smartphone displaying a dark-themed chat application, resting on a matte black desk surface with soft ambient blue lighting reflecting off the screen." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMSVb1vy5xEm58OWRQSbgenY_9F0UpuJEKfqnR6vMeK89UsjwDNiFzJBnmEubTAlhjxmBGZNqhcfQSqLnlwqjlQjEAhw_AdtcQWF5UvotwK-DYoWSSMfj2hH2ot-wfANYWMkTRLa6blZvboSmdT2sIv4PVgpaaVKJaGScJNsprICtn5H81dJcAm7I-z9DFjdr5gm8JX3E4ZHMLePHUspjt0b7tiOoHWaGKdmScIlW9ql2ee4vou4oqpqRtBJUHe08ViN1tgV5cd1jF"/>
+</div>
+</div>
+<div class="mt-sm flex items-center gap-3 p-sm bg-surface rounded-lg border border-outline-variant/20 hover:border-primary/50 cursor-pointer transition-colors shadow-sm">
+<div class="w-8 h-8 bg-surface-variant rounded flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-sm">picture_as_pdf</span>
+</div>
+<div class="min-w-0 flex-1">
+<p class="font-label text-sm text-on-surface font-bold truncate">Q3_Design_Specs.pdf</p>
+<p class="font-label text-xs text-outline">2.4 MB</p>
+</div>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</div>
+<style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(171, 180, 172, 0.4);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(171, 180, 172, 0.6);
+        }
+    </style>
+</body></html>
