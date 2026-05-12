@@ -1,9 +1,12 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useSocket, disconnectSocket } from '../hooks/useSocket';
-import { getUsersApi, getMessagesApi, sendMessageApi } from '../api';
+import { getUsersApi, getMessagesApi, sendMessageApi, deleteMessageApi, reactToMessageApi, uploadFileApi } from '../api';
+
+const EMOJIS = ['😀','😂','❤️','👍','👎','😮','😢','🔥','🎉','🙏','😍','😎','🤔','😴','💯'];
+const QUICK_REACTIONS = ['❤️','😂','👍','😮','😢','🙏'];
 
 function formatTime(dateStr) {
   const d = new Date(dateStr);
@@ -30,13 +33,20 @@ export default function Chat() {
   const [typingUsers, setTypingUsers] = useState(new Set());
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [replyTo, setReplyTo] = useState(null);        // message being replied to
+  const [showEmoji, setShowEmoji] = useState(false);   // emoji picker open
+  const [contextMenu, setContextMenu] = useState(null); // { x, y, message }
+  const [imagePreview, setImagePreview] = useState(null); // { url, file }
+  const [msgSearch, setMsgSearch] = useState('');       // search within chat
+  const [showMsgSearch, setShowMsgSearch] = useState(false);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, typingUsers]);
 
   // Fetch users for sidebar
   useEffect(() => {
@@ -52,7 +62,14 @@ export default function Chat() {
     setLoadingMsgs(true);
     setMessages([]);
     getMessagesApi(selectedUser._id)
-      .then(({ data }) => setMessages(data))
+      .then(({ data }) => {
+        setMessages(data);
+        // Tell the sender their messages have been seen
+        socketRef.current?.emit('messages_read', {
+          senderId: selectedUser._id,
+          receiverId: user._id,
+        });
+      })
       .catch(() => toast.error('Failed to load messages'))
       .finally(() => setLoadingMsgs(false));
   }, [selectedUser]);
@@ -64,11 +81,32 @@ export default function Chat() {
 
     const onReceiveMessage = (data) => {
       if (selectedUser && data.senderId === selectedUser._id) {
-        setMessages(prev => [...prev, data]);
+        // If actively viewing this chat, mark as seen immediately
+        setMessages(prev => [...prev, { ...data, seen: true }]);
+        // Tell sender we've seen it
+        socketRef.current?.emit('messages_read', {
+          senderId: data.senderId,
+          receiverId: user._id,
+        });
+      } else {
+        // Not viewing — mark as delivered (not seen)
+        setUsers(prev => prev.map(u => {
+          if (u._id === data.senderId) {
+            return {
+              ...u,
+              lastMessagePreview: data.text,
+              unreadCount: (u.unreadCount || 0) + 1
+            };
+          }
+          return u;
+        }));
       }
-      // Update last message preview in sidebar
-      setUsers(prev => prev.map(u =>
-        u._id === data.senderId ? { ...u, lastMessagePreview: data.text } : u
+    };
+
+    const onMessagesRead = ({ receiverId }) => {
+      // Receiver has seen our messages — mark all our sent messages to them as seen
+      setMessages(prev => prev.map(m =>
+        m.senderId === user._id ? { ...m, seen: true } : m
       ));
     };
 
@@ -90,55 +128,123 @@ export default function Chat() {
       setTypingUsers(prev => { const s = new Set(prev); s.delete(senderId); return s; });
     };
 
+    const onInitialOnlineUsers = (userIds) => {
+      setOnlineUsers(new Set(userIds));
+    };
+
+    const onMessageDeleted = ({ messageId }) => {
+      setMessages(prev => prev.map(m => m._id === messageId
+        ? { ...m, deletedForEveryone: true, text: '', image: null }
+        : m
+      ));
+    };
+
+    const onMessageReaction = ({ messageId, reactions }) => {
+      setMessages(prev => prev.map(m => m._id === messageId ? { ...m, reactions } : m));
+    };
+
+    socket.on('initial_online_users', onInitialOnlineUsers);
     socket.on('receive_message', onReceiveMessage);
     socket.on('user_status', onUserStatus);
     socket.on('typing', onTyping);
     socket.on('stop_typing', onStopTyping);
+    socket.on('messages_read', onMessagesRead);
+    socket.on('message_deleted', onMessageDeleted);
+    socket.on('message_reaction', onMessageReaction);
 
     return () => {
+      socket.off('initial_online_users', onInitialOnlineUsers);
       socket.off('receive_message', onReceiveMessage);
       socket.off('user_status', onUserStatus);
       socket.off('typing', onTyping);
       socket.off('stop_typing', onStopTyping);
+      socket.off('messages_read', onMessagesRead);
+      socket.off('message_deleted', onMessageDeleted);
+      socket.off('message_reaction', onMessageReaction);
     };
   }, [socketRef, selectedUser]);
 
-  const handleSend = async () => {
-    if (!message.trim() || !selectedUser || sending) return;
+  const handleSend = async (e) => {
+    e?.preventDefault();
+    if ((!message.trim() && !imagePreview) || !selectedUser || sending) return;
     const text = message.trim();
     setMessage('');
+    setReplyTo(null);
     setSending(true);
 
-    // Optimistic UI
+    let imageUrl = null;
+    if (imagePreview?.file) {
+      try {
+        const fd = new FormData();
+        fd.append('file', imagePreview.file);
+        const { data } = await uploadFileApi(fd);
+        imageUrl = data.url;
+      } catch { toast.error('Image upload failed'); }
+    }
+    setImagePreview(null);
+
     const optimistic = {
       _id: `opt_${Date.now()}`,
       senderId: user._id,
       text,
+      image: imageUrl,
+      replyToSnapshot: replyTo ? { text: replyTo.text, senderName: replyTo.senderId === user._id ? 'You' : selectedUser.name, image: replyTo.image } : null,
       createdAt: new Date().toISOString(),
       optimistic: true,
     };
     setMessages(prev => [...prev, optimistic]);
 
     try {
-      const { data: saved } = await sendMessageApi(selectedUser._id, text);
-      // Replace optimistic with real
+      const { data: saved } = await sendMessageApi(selectedUser._id, { text, image: imageUrl, replyToId: replyTo?._id });
       setMessages(prev => prev.map(m => m._id === optimistic._id ? saved : m));
-
-      // Notify receiver via socket
       socketRef.current?.emit('send_message', {
-        senderId: user._id,
-        receiverId: selectedUser._id,
-        text,
+        senderId: user._id, receiverId: selectedUser._id,
+        text, image: imageUrl,
+        replyToSnapshot: saved.replyToSnapshot,
         conversationId: saved.conversationId,
-        _id: saved._id,
-        createdAt: saved.createdAt,
+        _id: saved._id, createdAt: saved.createdAt,
       });
     } catch {
       toast.error('Failed to send message');
       setMessages(prev => prev.filter(m => m._id !== optimistic._id));
-    } finally {
-      setSending(false);
-    }
+    } finally { setSending(false); }
+  };
+
+  const handleDelete = async (msg, forEveryone) => {
+    setContextMenu(null);
+    if (msg.optimistic) { setMessages(prev => prev.filter(m => m._id !== msg._id)); return; }
+    try {
+      await deleteMessageApi(msg._id, forEveryone);
+      if (forEveryone) {
+        setMessages(prev => prev.map(m => m._id === msg._id ? { ...m, deletedForEveryone: true, text: '', image: null } : m));
+        socketRef.current?.emit('message_deleted', { messageId: msg._id, receiverId: selectedUser._id });
+      } else {
+        setMessages(prev => prev.filter(m => m._id !== msg._id));
+      }
+    } catch { toast.error('Delete failed'); }
+  };
+
+  const handleReact = async (msg, emoji) => {
+    setContextMenu(null);
+    if (msg.optimistic) return;
+    try {
+      const { data: updated } = await reactToMessageApi(msg._id, emoji);
+      setMessages(prev => prev.map(m => m._id === msg._id ? { ...m, reactions: updated.reactions } : m));
+      socketRef.current?.emit('message_reaction', { messageId: msg._id, reactions: updated.reactions, receiverId: selectedUser._id });
+    } catch { toast.error('Reaction failed'); }
+  };
+
+  const handleImagePick = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setImagePreview({ url, file });
+    e.target.value = '';
+  };
+
+  const openContextMenu = (e, msg) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, message: msg });
   };
 
   const handleKeyDown = (e) => {
@@ -166,6 +272,13 @@ export default function Chat() {
     toast.success('Logged out');
   };
 
+  const handleUserSelect = (u) => {
+    setSelectedUser(u);
+    setSidebarOpen(false);
+    // Reset unread count locally when viewing chat
+    setUsers(prev => prev.map(user => user._id === u._id ? { ...user, unreadCount: 0 } : user));
+  };
+
   const filteredUsers = users.filter(u =>
     u.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -174,237 +287,418 @@ export default function Chat() {
   const isTyping = selectedUser && typingUsers.has(selectedUser._id);
 
   return (
-    <div className="bg-background text-on-background h-screen flex overflow-hidden w-full relative">
-      {/* Sidebar overlay on mobile */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />
-      )}
-
-      {/* Sidebar */}
-      <aside className={`${sidebarOpen ? 'flex' : 'hidden'} md:flex flex-col w-80 h-full bg-surface-container-lowest/50 border-r border-white/5 backdrop-blur-3xl fixed md:relative z-40 md:z-auto`}>
-        {/* Sidebar Header */}
-        <div className="h-16 flex items-center justify-between px-margin-mobile border-b border-white/5">
-          <h2 className="font-display-lg text-title-lg text-primary">Contacts</h2>
-          <button onClick={handleLogout} className="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant/60 hover:text-error hover:bg-white/5 transition-all" title="Logout">
-            <span className="material-symbols-outlined text-[20px]">logout</span>
+    <div className="bg-background text-on-background font-body text-base h-screen overflow-hidden flex selection:bg-primary-container selection:text-on-primary-container relative">
+      {/* SideNavBar */}
+      <nav className="hidden md:flex fixed left-0 top-0 h-full w-[280px] flex-col p-lg border-r border-outline-variant/30 shadow-sm bg-surface z-20 transition-transform duration-300 md:translate-x-0 -translate-x-full">
+        <div className="mb-xl">
+          <h1 className="font-display text-4xl font-bold text-primary tracking-tight">PulseChat</h1>
+          <p className="font-label text-sm text-on-surface-variant mt-xs">Connected</p>
+        </div>
+        <button onClick={() => setSidebarOpen(true)} className="w-full bg-primary text-on-primary font-label text-sm font-bold py-3 px-md rounded-lg shadow-sm hover:bg-primary-dim active:scale-95 transition-all duration-200 flex items-center justify-center gap-sm mb-lg">
+          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>add</span>
+          New Chat
+        </button>
+        <div className="flex-1 overflow-y-auto space-y-2 pr-sm custom-scrollbar">
+          <button onClick={() => setSidebarOpen(true)} className="w-full text-on-primary-container font-bold flex items-center gap-4 py-3 px-4 rounded-lg bg-primary-container active:scale-95 transition-transform">
+            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>chat</span>
+            <span className="font-label text-sm">Chats</span>
+          </button>
+          <button onClick={() => setSidebarOpen(true)} className="w-full text-on-surface-variant flex items-center gap-4 py-3 px-4 rounded-lg hover:bg-surface-variant/50 hover:text-on-surface transition-all duration-200 active:scale-95">
+            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>group</span>
+            <span className="font-label text-sm">Contacts</span>
           </button>
         </div>
-
-        <div className="flex-1 overflow-y-auto px-4 py-md space-y-md hide-scrollbar">
-          {/* Search */}
-          <div className="relative group">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/40 group-focus-within:text-primary transition-colors">search</span>
-            <input
-              value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-white/5 border-none rounded-xl py-2 pl-10 pr-4 text-body-md focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-on-surface-variant/30 text-on-surface outline-none"
-              placeholder="Search conversations..." type="text"
-            />
-          </div>
-
-          {/* Filter pills */}
-          <div className="flex gap-2">
-            <button className="bg-primary/20 text-primary border border-primary/30 rounded-full px-4 py-1 text-label-sm font-label-sm">
-              Online ({users.filter(u => isOnline(u._id)).length})
-            </button>
-            <button className="bg-white/5 text-on-surface-variant hover:bg-white/10 rounded-full px-4 py-1 text-label-sm font-label-sm transition-colors">All</button>
-          </div>
-
-          {/* Contact list */}
-          <div className="space-y-sm">
-            {loadingUsers ? (
-              <div className="text-center py-8 text-on-surface-variant/40 text-body-md">Loading contacts...</div>
-            ) : filteredUsers.length === 0 ? (
-              <div className="text-center py-8 text-on-surface-variant/40 text-body-md">No contacts found</div>
-            ) : (
-              filteredUsers.map(u => {
-                const online = isOnline(u._id);
-                const active = selectedUser?._id === u._id;
-                return (
-                  <div
-                    key={u._id}
-                    onClick={() => { setSelectedUser(u); setSidebarOpen(false); }}
-                    className={`flex items-center gap-md p-3 rounded-xl cursor-pointer transition-all active:scale-[0.98] ${active ? 'bg-primary/10 border border-primary/20' : 'hover:bg-white/5'}`}
-                  >
-                    <div className="relative w-12 h-12 shrink-0">
-                      {u.avatar ? (
-                        <img alt={u.name} src={u.avatar} className="w-full h-full rounded-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary text-sm">
-                          {getInitials(u.name)}
-                        </div>
-                      )}
-                      <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background ${online ? 'bg-primary status-glow-online' : 'bg-outline'}`}></div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-center mb-0.5">
-                        <span className={`text-body-lg truncate ${active ? 'text-primary' : 'text-on-surface'}`}>{u.name}</span>
-                        {online && <span className="text-[10px] text-primary/60 font-label-sm uppercase tracking-wider">Active</span>}
-                      </div>
-                      <p className="text-body-md text-on-surface-variant/60 truncate">{u.email}</p>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
+        <div className="mt-auto pt-lg border-t border-outline-variant/30 space-y-2">
+          <button onClick={() => toast("Profile editing coming soon!", { icon: '🛠️' })} className="w-full text-on-surface-variant flex items-center gap-4 py-3 px-4 rounded-lg hover:bg-surface-variant/50 hover:text-on-surface transition-all duration-200 active:scale-95">
+            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>account_circle</span>
+            <span className="font-label text-sm">Profile</span>
+          </button>
+          <button onClick={handleLogout} className="w-full text-on-surface-variant flex items-center gap-4 py-3 px-4 rounded-lg hover:bg-surface-variant/50 hover:text-on-surface transition-all duration-200 active:scale-95">
+            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>logout</span>
+            <span className="font-label text-sm">Logout</span>
+          </button>
         </div>
-      </aside>
+      </nav>
 
-      {/* Main chat area */}
-      <main className="relative flex-1 flex flex-col h-full bg-background overflow-hidden">
-        {/* Header */}
-        <header className="flex justify-between items-center px-margin-mobile h-16 w-full bg-surface/10 backdrop-blur-xl border-b border-white/10 z-20 sticky top-0">
-          <div className="flex items-center gap-md">
-            <button className="md:hidden text-primary transition-all duration-300 active:scale-95" onClick={() => setSidebarOpen(true)}>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col md:ml-[280px] w-full md:w-[calc(100%-280px)] h-full">
+        {/* TopAppBar */}
+        <header className="docked full-width top-0 bg-surface border-b border-outline-variant/30 flex justify-between items-center px-lg py-md z-10 shadow-sm">
+          <div className="flex items-center gap-lg">
+            <button className="lg:hidden text-on-surface-variant hover:text-primary transition-colors" onClick={() => setSidebarOpen(!sidebarOpen)}>
               <span className="material-symbols-outlined">menu</span>
             </button>
-            {selectedUser ? (
-              <div className="flex items-center gap-sm">
-                <div className="relative w-10 h-10">
-                  {selectedUser.avatar ? (
-                    <img alt={selectedUser.name} src={selectedUser.avatar} className="w-full h-full rounded-full object-cover border border-white/10" />
-                  ) : (
-                    <div className="w-full h-full rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary text-sm">
-                      {getInitials(selectedUser.name)}
-                    </div>
-                  )}
-                  <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-background ${isOnline(selectedUser._id) ? 'bg-primary status-glow-online' : 'bg-outline'}`}></div>
-                </div>
-                <div>
-                  <h1 className="font-title-lg text-title-lg text-primary leading-tight">{selectedUser.name}</h1>
-                  <p className="text-label-sm font-label-sm" style={{ color: isTyping ? '#adc6ff' : 'rgba(173,198,255,0.6)' }}>
-                    {isTyping ? 'typing...' : isOnline(selectedUser._id) ? 'Active now' : 'Offline'}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div>
-                <h1 className="font-title-lg text-title-lg text-on-surface">PulseChat</h1>
-                <p className="text-label-sm text-on-surface-variant/40 font-label-sm">Select a contact</p>
-              </div>
-            )}
+            <div className="hidden md:flex bg-surface-container border border-outline-variant/30 rounded-full px-4 py-2 items-center gap-2 focus-within:border-primary transition-colors w-64">
+              <span className="material-symbols-outlined text-outline text-sm">search</span>
+              <input 
+                value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                className="bg-transparent border-none outline-none text-on-surface font-label text-sm w-full placeholder-outline focus:ring-0 p-0" 
+                placeholder="Search..." type="text"
+              />
+            </div>
           </div>
-          <div className="flex items-center gap-sm">
-            {selectedUser && (
-              <>
-                <button className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant/60 hover:bg-white/5 transition-all">
-                  <span className="material-symbols-outlined">videocam</span>
-                </button>
-                <button className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant/60 hover:bg-white/5 transition-all">
-                  <span className="material-symbols-outlined">call</span>
-                </button>
-              </>
-            )}
-            <button onClick={handleLogout} className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant/60 hover:text-error hover:bg-white/5 transition-all" title="Logout">
-              <span className="material-symbols-outlined">logout</span>
+          <div className="flex gap-lg items-center">
+            <nav className="hidden md:flex gap-md font-label text-sm">
+              <span onClick={() => toast("Filtering by Recent coming soon", { icon: '⏳' })} className="text-primary border-b-2 border-primary pb-1 font-bold cursor-pointer transition-opacity active:opacity-70">Recent</span>
+              <span onClick={() => toast("Pinned chats coming soon", { icon: '📌' })} className="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-70">Pinned</span>
+            </nav>
+          </div>
+          <div className="flex items-center gap-md">
+            <button onClick={() => toast("No new notifications")} className="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-70">
+              <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>notifications</span>
             </button>
+            <div className="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/30 bg-primary/20 flex items-center justify-center font-bold text-primary">
+              {getInitials(user?.name)}
+            </div>
           </div>
         </header>
 
-        {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto px-margin-mobile py-lg space-y-lg relative z-10 scroll-smooth hide-scrollbar pb-32">
-          {!selectedUser ? (
-            <div className="flex flex-col items-center justify-center h-full gap-4 text-center pt-24">
-              <div className="w-20 h-20 glass-card rounded-full flex items-center justify-center">
-                <span className="material-symbols-outlined text-primary text-[48px]" style={{ fontVariationSettings: "'FILL' 1" }}>chat_bubble</span>
+        <div className="flex-1 flex overflow-hidden bg-surface-container-lowest">
+          {/* Left Chat List Column */}
+          <aside className={`w-full sm:w-[320px] ${sidebarOpen ? 'flex absolute inset-y-0 left-0 z-50 bg-surface-container-lowest' : 'hidden'} lg:flex flex-col border-r border-outline-variant/30 h-full`}>
+            {sidebarOpen && (
+              <div className="p-md flex justify-between items-center border-b border-outline-variant/20 lg:hidden bg-surface">
+                <h2 className="font-headline text-xl font-bold text-on-surface">Chats</h2>
+                <div className="flex gap-2">
+                  <button onClick={handleLogout} className="text-error flex items-center justify-center p-2 rounded-lg hover:bg-error/10">
+                    <span className="material-symbols-outlined">logout</span>
+                  </button>
+                  <button onClick={() => setSidebarOpen(false)} className="text-on-surface-variant p-2 rounded-lg hover:bg-surface-variant">
+                    <span className="material-symbols-outlined">close</span>
+                  </button>
+                </div>
               </div>
-              <h2 className="text-headline-md font-headline-md text-on-surface">Welcome, {user?.name}!</h2>
-              <p className="text-body-md text-on-surface-variant/60">Select a contact from the sidebar to start chatting.</p>
+            )}
+            <div className="p-md border-b border-outline-variant/20">
+              <div className="flex justify-between items-center mb-sm">
+                <h2 className="font-headline text-2xl font-bold text-on-surface">Messages</h2>
+                <span className="bg-primary-container text-on-primary-container px-2 py-1 rounded-full font-label text-xs font-bold">New</span>
+              </div>
             </div>
-          ) : loadingMsgs ? (
-            <div className="flex items-center justify-center pt-24">
-              <span className="material-symbols-outlined text-primary text-[32px] animate-spin">progress_activity</span>
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
+              {loadingUsers ? (
+                <div className="text-center py-8 text-on-surface-variant font-label text-sm">Loading contacts...</div>
+              ) : filteredUsers.length === 0 ? (
+                <div className="text-center py-8 text-on-surface-variant font-label text-sm">No contacts found</div>
+              ) : (
+                filteredUsers.map(u => {
+                  const online = isOnline(u._id);
+                  const active = selectedUser?._id === u._id;
+                  return (
+                    <div 
+                      key={u._id} 
+                      onClick={() => handleUserSelect(u)}
+                      className={`p-md border-b border-outline-variant/10 cursor-pointer transition-colors flex gap-md items-start group ${active ? 'bg-surface-container border-l-4 border-l-primary' : 'hover:bg-surface-container'}`}
+                    >
+                      <div className="relative flex-shrink-0">
+                        <div className={`w-12 h-12 rounded-full overflow-hidden border transition-colors ${active ? 'border-2 border-primary' : 'border-outline-variant/30 group-hover:border-primary'}`}>
+                          {u.avatar ? (
+                            <img alt={u.name} src={u.avatar} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary text-sm">
+                              {getInitials(u.name)}
+                            </div>
+                          )}
+                        </div>
+                        <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-surface-container-lowest ${online ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-white'}`}></div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-baseline mb-xs">
+                          <h3 className="font-label text-sm text-on-surface font-bold truncate">{u.name}</h3>
+                          {u.unreadCount > 0 && (
+                            <span className="bg-primary text-on-primary rounded-full px-2 py-0.5 text-[10px] font-bold shadow-sm">
+                              {u.unreadCount}
+                            </span>
+                          )}
+                        </div>
+                        <p className={`font-body text-sm truncate ${active ? 'text-on-surface font-medium' : u.unreadCount > 0 ? 'text-on-surface font-bold' : 'text-on-surface-variant'}`}>
+                          {u.lastMessagePreview || u.email}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
-          ) : messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full gap-2 text-center pt-24">
-              <span className="material-symbols-outlined text-on-surface-variant/30 text-[48px]">waving_hand</span>
-              <p className="text-body-md text-on-surface-variant/40">No messages yet. Say hello!</p>
-            </div>
-          ) : (
-            messages.map(msg => {
-              const isMine = msg.senderId === user._id || msg.senderId?._id === user._id;
-              return (
-                <div key={msg._id} className={`flex ${isMine ? 'flex-col items-end gap-xs ml-auto' : 'items-end gap-sm'} max-w-[85%] md:max-w-[70%] ${isMine ? 'ml-auto' : ''}`}>
-                  {!isMine && (
-                    <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-white/10">
+          </aside>
+
+          {/* Center Chat Canvas */}
+          <main className="flex-1 flex flex-col min-w-0 relative bg-surface-bright">
+            {selectedUser ? (
+              <>
+                {/* Sticky Chat Header */}
+                <div className="h-16 border-b border-outline-variant/30 bg-surface flex items-center justify-between px-md sticky top-0 z-10 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <button className="lg:hidden text-on-surface-variant p-1 -ml-2 rounded-lg hover:bg-surface-variant transition-colors" onClick={() => { setSelectedUser(null); setSidebarOpen(true); }}>
+                      <span className="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <div className="w-10 h-10 rounded-full overflow-hidden border border-outline-variant/30">
                       {selectedUser.avatar ? (
                         <img alt={selectedUser.name} src={selectedUser.avatar} className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
+                        <div className="w-full h-full rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary text-sm">
                           {getInitials(selectedUser.name)}
                         </div>
                       )}
                     </div>
-                  )}
-                  <div className="flex flex-col gap-xs">
-                    <div className={`p-md rounded-2xl text-body-md shadow-xl ${isMine ? 'message-out backdrop-blur-md text-on-surface-variant rounded-br-xs' : 'glass-surface text-on-surface rounded-bl-xs'} ${msg.optimistic ? 'opacity-70' : ''}`}>
-                      {msg.text}
-                    </div>
-                    <div className={`flex items-center gap-1 ${isMine ? 'justify-end mr-1' : 'ml-1'}`}>
-                      <span className="text-[10px] text-on-surface-variant/40">{formatTime(msg.createdAt)}</span>
-                      {isMine && <span className="material-symbols-outlined text-[12px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>done_all</span>}
+                    <div className="flex flex-col">
+                      <h2 className="font-label text-sm font-bold text-on-surface">{selectedUser.name}</h2>
+                      <p className="font-body text-xs text-on-surface-variant flex items-center gap-1">
+                        <span className={`w-2 h-2 border border-outline-variant/30 rounded-full ${isOnline(selectedUser._id) ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-white'}`}></span>
+                        {isTyping ? 'typing...' : isOnline(selectedUser._id) ? 'Online' : 'Offline'}
+                      </p>
                     </div>
                   </div>
+                  <div className="flex gap-sm">
+                    <button onClick={() => setShowMsgSearch(v => !v)} className="p-2 text-on-surface-variant hover:text-primary rounded-lg hover:bg-surface-variant transition-all" title="Search messages">
+                      <span className="material-symbols-outlined">search</span>
+                    </button>
+                    <button onClick={() => toast('Video call coming soon', { icon: '📹' })} className="p-2 text-on-surface-variant hover:text-primary rounded-lg hover:bg-surface-variant transition-all">
+                      <span className="material-symbols-outlined">videocam</span>
+                    </button>
+                    <button onClick={() => toast('Voice call coming soon', { icon: '📞' })} className="p-2 text-on-surface-variant hover:text-primary rounded-lg hover:bg-surface-variant transition-all">
+                      <span className="material-symbols-outlined">call</span>
+                    </button>
+                  </div>
                 </div>
-              );
-            })
-          )}
-          <div ref={messagesEndRef} />
-        </div>
 
-        {/* Floating Message Input */}
-        {selectedUser && (
-          <div className="absolute bottom-xl left-margin-mobile right-margin-mobile z-30">
-            <div className="glass-floating rounded-full p-2 flex items-center gap-2 border border-white/10 shadow-2xl">
-              <button className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant/60 hover:text-primary transition-colors shrink-0">
-                <span className="material-symbols-outlined">add_circle</span>
-              </button>
-              <input
-                className="flex-1 bg-transparent border-none focus:ring-0 text-body-md text-on-surface placeholder:text-on-surface-variant/40 h-10 outline-none w-full"
-                placeholder="Type a message..."
-                type="text"
-                value={message}
-                onChange={handleTyping}
-                onKeyDown={handleKeyDown}
-              />
-              <button className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant/60 hover:text-primary transition-colors shrink-0">
-                <span className="material-symbols-outlined">sentiment_satisfied</span>
-              </button>
-              <button
-                onClick={handleSend}
-                disabled={!message.trim() || sending}
-                className="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-[0_0_20px_rgba(173,198,255,0.3)] hover:scale-105 active:scale-95 transition-all shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>send</span>
-              </button>
+                {/* In-chat search bar */}
+                {showMsgSearch && (
+                  <div className="bg-surface border-b border-outline-variant/30 px-md py-2 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-on-surface-variant">search</span>
+                    <input
+                      value={msgSearch} onChange={e => setMsgSearch(e.target.value)}
+                      placeholder="Search in conversation..."
+                      className="flex-1 bg-transparent outline-none text-on-surface font-body text-sm"
+                      autoFocus
+                    />
+                    {msgSearch && <button onClick={() => setMsgSearch('')} className="text-on-surface-variant"><span className="material-symbols-outlined text-[18px]">close</span></button>}
+                  </div>
+                )}
+
+                {/* Messages Area */}
+                <div className="flex-1 overflow-y-auto p-lg flex flex-col gap-md custom-scrollbar bg-chat-pattern relative">
+                  {loadingMsgs ? (
+                    <div className="text-center py-8 text-on-surface-variant font-label text-sm">Loading messages...</div>
+                  ) : messages.length === 0 ? (
+                    <div className="text-center py-8 text-on-surface-variant font-label text-sm">No messages yet. Say hi!</div>
+                  ) : (
+                    messages
+                      .filter(m => !msgSearch || (m.text || '').toLowerCase().includes(msgSearch.toLowerCase()))
+                      .map((m, index) => {
+                      const isMe = m.senderId === user._id;
+                      const isDeleted = m.deletedForEveryone;
+                      return (
+                        <div
+                          key={m._id || index}
+                          className={`flex gap-sm max-w-[80%] group ${isMe ? 'self-end flex-row-reverse' : 'self-start'}`}
+                          onContextMenu={(e) => openContextMenu(e, m)}
+                        >
+                          {!isMe && (
+                            <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 mt-auto border border-outline-variant/30">
+                              {selectedUser.avatar
+                                ? <img alt={selectedUser.name} src={selectedUser.avatar} className="w-full h-full object-cover" />
+                                : <div className="w-full h-full rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary text-xs">{getInitials(selectedUser.name)}</div>
+                              }
+                            </div>
+                          )}
+                          <div className="flex flex-col gap-1">
+                            {/* Reply preview */}
+                            {m.replyToSnapshot && !isDeleted && (
+                              <div className={`px-3 py-1.5 rounded-lg border-l-4 border-primary text-xs ${isMe ? 'bg-primary/10 text-on-primary-container' : 'bg-surface-variant text-on-surface-variant'} max-w-[240px] truncate`}>
+                                <span className="font-bold block">{m.replyToSnapshot.senderName}</span>
+                                {m.replyToSnapshot.image ? '📷 Photo' : m.replyToSnapshot.text}
+                              </div>
+                            )}
+                            <div className={`${isMe ? 'bg-primary-container text-on-primary-container rounded-br-sm' : 'bg-surface text-on-surface border border-outline-variant/20 rounded-bl-sm'} rounded-2xl shadow-sm relative ${m.optimistic ? 'opacity-70' : ''} ${isDeleted ? 'opacity-50 italic' : ''}`}>
+                              {/* Image */}
+                              {m.image && !isDeleted && (
+                                <img src={m.image} alt="" className="max-w-[240px] w-full rounded-xl mb-1 object-cover" />
+                              )}
+                              <div className="px-3 py-2">
+                                {isDeleted
+                                  ? <p className="font-body text-sm text-on-surface-variant flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">block</span> This message was deleted</p>
+                                  : m.text ? <p className="font-body text-base">{m.text}</p> : null
+                                }
+                                <span className="font-label text-[10px] flex justify-end items-center gap-0.5 mt-1">
+                                  <span className={isMe ? 'text-primary' : 'text-on-surface-variant'}>{formatTime(m.createdAt)}</span>
+                                  {isMe && !isDeleted && (
+                                    m.optimistic
+                                      ? <span className="material-symbols-outlined text-[13px] text-on-surface-variant/50">done</span>
+                                      : m.seen
+                                        ? <span className="material-symbols-outlined text-[13px] text-primary" title="Seen">done_all</span>
+                                        : <span className="material-symbols-outlined text-[13px] text-on-surface-variant" title="Delivered">done_all</span>
+                                  )}
+                                </span>
+                              </div>
+                              {/* Reactions display */}
+                              {m.reactions?.length > 0 && (
+                                <div className="flex gap-0.5 flex-wrap px-2 pb-1">
+                                  {Object.entries(
+                                    m.reactions.reduce((acc, r) => { acc[r.emoji] = (acc[r.emoji] || 0) + 1; return acc; }, {})
+                                  ).map(([emoji, count]) => (
+                                    <button key={emoji} onClick={() => handleReact(m, emoji)} className="bg-surface-container-low text-xs px-1.5 py-0.5 rounded-full border border-outline-variant/30 hover:bg-surface-variant transition-colors">
+                                      {emoji}{count > 1 ? ` ${count}` : ''}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            {/* Quick reaction on hover */}
+                            {!isDeleted && !m.optimistic && (
+                              <div className={`hidden group-hover:flex gap-0.5 ${isMe ? 'justify-end' : 'justify-start'}`}>
+                                {QUICK_REACTIONS.map(e => (
+                                  <button key={e} onClick={() => handleReact(m, e)} className="text-xs bg-surface border border-outline-variant/30 rounded-full px-1.5 py-0.5 hover:bg-surface-variant transition-colors shadow-sm">{e}</button>
+                                ))}
+                                <button onClick={(ev) => openContextMenu(ev, m)} className="text-[12px] bg-surface border border-outline-variant/30 rounded-full px-1.5 py-0.5 hover:bg-surface-variant transition-colors shadow-sm text-on-surface-variant">
+                                  <span className="material-symbols-outlined text-[14px]">more_vert</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                  {isTyping && (
+                    <div className="flex gap-sm self-start max-w-[80%] mb-2">
+                      <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 mt-auto border border-outline-variant/30">
+                        {selectedUser.avatar ? (
+                          <img alt={selectedUser.name} src={selectedUser.avatar} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary text-xs">
+                            {getInitials(selectedUser.name)}
+                          </div>
+                        )}
+                      </div>
+                      <div className="bg-surface text-on-surface border border-outline-variant/20 rounded-2xl rounded-bl-sm p-md shadow-sm flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 bg-on-surface-variant rounded-full animate-bounce"></span>
+                        <span className="w-1.5 h-1.5 bg-on-surface-variant rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+                        <span className="w-1.5 h-1.5 bg-on-surface-variant rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {/* Input Area */}
+                <div className="bg-surface border-t border-outline-variant/30 z-10">
+                  {/* Reply preview bar */}
+                  {replyTo && (
+                    <div className="flex items-center gap-2 px-md py-2 bg-surface-container border-b border-outline-variant/20">
+                      <div className="flex-1 border-l-4 border-primary pl-2">
+                        <p className="text-xs font-bold text-primary">{replyTo.senderId === user._id ? 'You' : selectedUser.name}</p>
+                        <p className="text-xs text-on-surface-variant truncate">{replyTo.image ? '📷 Photo' : replyTo.text}</p>
+                      </div>
+                      <button onClick={() => setReplyTo(null)} className="text-on-surface-variant"><span className="material-symbols-outlined text-[18px]">close</span></button>
+                    </div>
+                  )}
+                  {/* Image preview */}
+                  {imagePreview && (
+                    <div className="px-md py-2 flex items-center gap-3 bg-surface-container border-b border-outline-variant/20">
+                      <img src={imagePreview.url} alt="preview" className="w-16 h-16 rounded-lg object-cover border border-outline-variant/30" />
+                      <span className="text-xs text-on-surface-variant flex-1 truncate">{imagePreview.file?.name}</span>
+                      <button onClick={() => setImagePreview(null)} className="text-error"><span className="material-symbols-outlined text-[18px]">close</span></button>
+                    </div>
+                  )}
+                  <div className="p-md">
+                    <div className="bg-surface-container-low border border-outline-variant/50 rounded-2xl p-2 flex items-end gap-2 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
+                      <button onClick={() => setShowEmoji(v => !v)} className="p-2 text-on-surface-variant hover:text-primary transition-colors mb-1 rounded-lg hover:bg-surface-variant" title="Emoji">
+                        <span className="material-symbols-outlined">mood</span>
+                      </button>
+                      <button onClick={() => fileInputRef.current?.click()} className="p-2 text-on-surface-variant hover:text-primary transition-colors mb-1 rounded-lg hover:bg-surface-variant" title="Attach image">
+                        <span className="material-symbols-outlined">attach_file</span>
+                      </button>
+                      <input ref={fileInputRef} type="file" accept="image/*,video/*,.pdf,.doc,.docx" className="hidden" onChange={handleImagePick} />
+                      <textarea
+                        value={message}
+                        onChange={handleTyping}
+                        onKeyDown={handleKeyDown}
+                        className="flex-1 bg-transparent border-none outline-none text-on-surface font-body text-base resize-none max-h-32 min-h-[44px] py-2 placeholder-outline custom-scrollbar"
+                        placeholder="Type a message..." rows="1"
+                      />
+                      <button
+                        onClick={handleSend} disabled={(!message.trim() && !imagePreview) || sending}
+                        className="p-3 bg-primary text-on-primary rounded-xl hover:bg-primary-dim transition-colors mb-1 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                      >
+                        {sending
+                          ? <span className="material-symbols-outlined animate-spin" style={{ fontVariationSettings: "'FILL' 1" }}>progress_activity</span>
+                          : <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>send</span>
+                        }
+                      </button>
+                    </div>
+                  </div>
+                  {/* Emoji Picker */}
+                  {showEmoji && (
+                    <div className="absolute bottom-[80px] left-4 z-50 bg-surface border border-outline-variant/30 rounded-2xl shadow-xl p-3 grid grid-cols-5 gap-1 w-[200px]">
+                      {EMOJIS.map(e => (
+                        <button key={e} onClick={() => { setMessage(prev => prev + e); setShowEmoji(false); }}
+                          className="text-xl hover:bg-surface-container rounded-lg p-1 transition-colors">{e}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-xl">
+                <div className="w-24 h-24 rounded-full bg-surface-container flex items-center justify-center mb-md border border-outline-variant/20 shadow-sm">
+                  <span className="material-symbols-outlined text-primary text-5xl" style={{ fontVariationSettings: "'FILL' 1" }}>chat</span>
+                </div>
+                <h2 className="font-headline text-2xl font-bold text-on-surface mb-2">Welcome to PulseChat</h2>
+                <p className="font-body text-on-surface-variant max-w-[448px] mb-6">Select a contact from the sidebar to start a conversation, or create a new chat to connect with someone new.</p>
+                <button onClick={() => setSidebarOpen(true)} className="lg:hidden btn-primary w-auto px-6">
+                  <span className="material-symbols-outlined">chat</span>
+                  Open Chats
+                </button>
+              </div>
+            )}
+          </main>
+        </div>
+      </div>
+      {/* Context Menu */}
+      {contextMenu && (
+        <div
+          className="fixed z-[9999] bg-surface border border-outline-variant/30 rounded-xl shadow-xl py-1 min-w-[180px]"
+          style={{ left: Math.min(contextMenu.x, window.innerWidth - 200), top: Math.min(contextMenu.y, window.innerHeight - 220) }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="px-3 py-2 border-b border-outline-variant/20">
+            <p className="text-xs text-on-surface-variant font-bold">Quick Reactions</p>
+            <div className="flex gap-1 mt-1">
+              {QUICK_REACTIONS.map(e => (
+                <button key={e} onClick={() => handleReact(contextMenu.message, e)}
+                  className="text-base hover:bg-surface-container rounded-lg p-1 transition-colors">{e}</button>
+              ))}
             </div>
           </div>
-        )}
-
-        {/* Mobile Bottom Nav */}
-        <nav className="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 bg-surface/10 backdrop-blur-2xl border-t border-white/10 rounded-t-xl">
-          <div onClick={() => setSidebarOpen(true)} className="flex flex-col items-center justify-center bg-primary/20 text-primary rounded-full px-4 py-1 border border-primary/30 cursor-pointer">
-            <span className="material-symbols-outlined">chat_bubble</span>
-            <span className="font-label-sm text-label-sm">Chats</span>
-          </div>
-          <div className="flex flex-col items-center justify-center text-on-surface-variant/60">
-            <span className="material-symbols-outlined">person_search</span>
-            <span className="font-label-sm text-label-sm">Contacts</span>
-          </div>
-          <div className="flex flex-col items-center justify-center text-on-surface-variant/60">
-            <span className="material-symbols-outlined">explore</span>
-            <span className="font-label-sm text-label-sm">Explore</span>
-          </div>
-          <div onClick={handleLogout} className="flex flex-col items-center justify-center text-on-surface-variant/60 cursor-pointer">
-            <span className="material-symbols-outlined">logout</span>
-            <span className="font-label-sm text-label-sm">Logout</span>
-          </div>
-        </nav>
-      </main>
-
-      {/* Background Orbs */}
-      <div className="fixed top-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
-      <div className="fixed bottom-[-10%] left-[-10%] w-[30%] h-[30%] bg-secondary-container/10 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
+          <button onClick={() => { setReplyTo(contextMenu.message); setContextMenu(null); }}
+            className="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-surface-container flex items-center gap-2">
+            <span className="material-symbols-outlined text-[18px]">reply</span> Reply
+          </button>
+          <button onClick={() => { navigator.clipboard.writeText(contextMenu.message.text || ''); toast.success('Copied!'); setContextMenu(null); }}
+            className="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-surface-container flex items-center gap-2">
+            <span className="material-symbols-outlined text-[18px]">content_copy</span> Copy
+          </button>
+          {contextMenu.message.senderId === user._id && !contextMenu.message.deletedForEveryone && (
+            <button onClick={() => handleDelete(contextMenu.message, true)}
+              className="w-full text-left px-4 py-2 text-sm text-error hover:bg-error-container flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px]">delete</span> Delete for Everyone
+            </button>
+          )}
+          <button onClick={() => handleDelete(contextMenu.message, false)}
+            className="w-full text-left px-4 py-2 text-sm text-on-surface-variant hover:bg-surface-container flex items-center gap-2">
+            <span className="material-symbols-outlined text-[18px]">delete_outline</span> Delete for Me
+          </button>
+          <button onClick={() => setContextMenu(null)}
+            className="w-full text-left px-4 py-2 text-sm text-on-surface-variant hover:bg-surface-container flex items-center gap-2">
+            <span className="material-symbols-outlined text-[18px]">close</span> Cancel
+          </button>
+        </div>
+      )}
+      {/* Dismiss overlays on outside click */}
+      {(contextMenu || showEmoji) && (
+        <div className="fixed inset-0 z-[9998]" onClick={() => { setContextMenu(null); setShowEmoji(false); }} />
+      )}
     </div>
   );
 }
