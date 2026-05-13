@@ -690,25 +690,25 @@ export default function Chat() {
                   Open Chats
                 </button>
               </div>
-            )}
-            ) : (
-              // Groups mode
-              selectedGroup ? (
-                <GroupChat groupId={selectedGroup._id} onBack={() => setSelectedGroup(null)} />
-              ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-center p-xl">
-                  <div className="w-24 h-24 rounded-full bg-surface-container flex items-center justify-center mb-md border border-outline-variant/20 shadow-sm">
-                    <span className="material-symbols-outlined text-primary text-5xl">group</span>
-                  </div>
-                  <h2 className="font-headline text-2xl font-bold text-on-surface mb-2">No Group Selected</h2>
-                  <p className="font-body text-on-surface-variant max-w-[448px] mb-6">Select a group from the sidebar or create a new one to get started.</p>
-                  <button onClick={() => setShowGroupModal(true)} className="btn-primary w-auto px-6">
-                    <span className="material-symbols-outlined">add</span>
-                    Create Group
-                  </button>
-                </div>
-              )
             )
+          ) : (
+            // Groups mode
+            selectedGroup ? (
+              <GroupChat groupId={selectedGroup._id} onBack={() => setSelectedGroup(null)} />
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-xl">
+                <div className="w-24 h-24 rounded-full bg-surface-container flex items-center justify-center mb-md border border-outline-variant/20 shadow-sm">
+                  <span className="material-symbols-outlined text-primary text-5xl">group</span>
+                </div>
+                <h2 className="font-headline text-2xl font-bold text-on-surface mb-2">No Group Selected</h2>
+                <p className="font-body text-on-surface-variant max-w-[448px] mb-6">Select a group from the sidebar or create a new one to get started.</p>
+                <button onClick={() => setShowGroupModal(true)} className="btn-primary w-auto px-6">
+                  <span className="material-symbols-outlined">add</span>
+                  Create Group
+                </button>
+              </div>
+            )
+          )}
           </main>
         </div>
       </div>

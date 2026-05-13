@@ -34,7 +34,6 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Ensure indexes are created
-userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ isOnline: 1, lastSeen: -1 });
 
 const User = mongoose.model('User', userSchema);
