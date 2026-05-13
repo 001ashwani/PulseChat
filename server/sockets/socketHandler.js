@@ -12,20 +12,42 @@ const setupSockets = (io) => {
     });
 
     socket.on('send_message', (data) => {
-      const receiverSocketId = onlineUsers.get(data.receiverId);
-      if (receiverSocketId) {
-        io.to(receiverSocketId).emit('receive_message', data);
+      if (data.groupId) {
+        // Broadcast to all users in the group room
+        io.to(data.groupId).emit('receive_message', data);
+      } else if (data.receiverId) {
+        // Send to specific user
+        const receiverSocketId = onlineUsers.get(data.receiverId);
+        if (receiverSocketId) {
+          io.to(receiverSocketId).emit('receive_message', data);
+        }
       }
     });
 
-    socket.on('typing', ({ senderId, receiverId }) => {
-      const s = onlineUsers.get(receiverId);
-      if (s) io.to(s).emit('typing', { senderId });
+    socket.on('join_group', (groupId) => {
+      socket.join(groupId);
     });
 
-    socket.on('stop_typing', ({ senderId, receiverId }) => {
-      const s = onlineUsers.get(receiverId);
-      if (s) io.to(s).emit('stop_typing', { senderId });
+    socket.on('leave_group', (groupId) => {
+      socket.leave(groupId);
+    });
+
+    socket.on('typing', ({ senderId, receiverId, groupId }) => {
+      if (groupId) {
+        io.to(groupId).emit('typing', { senderId });
+      } else if (receiverId) {
+        const s = onlineUsers.get(receiverId);
+        if (s) io.to(s).emit('typing', { senderId });
+      }
+    });
+
+    socket.on('stop_typing', ({ senderId, receiverId, groupId }) => {
+      if (groupId) {
+        io.to(groupId).emit('stop_typing', { senderId });
+      } else if (receiverId) {
+        const s = onlineUsers.get(receiverId);
+        if (s) io.to(s).emit('stop_typing', { senderId });
+      }
     });
 
     socket.on('messages_read', async ({ senderId, receiverId }) => {
@@ -37,10 +59,30 @@ const setupSockets = (io) => {
           participants: { $all: [senderId, receiverId] }
         });
         if (conversation) {
-          await Message.updateMany(
-            { conversationId: conversation._id, senderId: senderId, seen: false },
-            { $set: { seen: true } }
+          // Update unread messages to 'read' status
+          const updated = await Message.updateMany(
+            { conversationId: conversation._id, senderId: senderId, status: { $in: ['sent', 'delivered'] } },
+            { $set: { status: 'read', readAt: new Date(), seen: true } }
           );
+          
+          // Fetch the updated messages to get their IDs
+          if (updated.modifiedCount > 0) {
+            const readMessages = await Message.find({
+              conversationId: conversation._id,
+              senderId: senderId,
+              status: 'read'
+            });
+            // Emit per-message read status
+            readMessages.forEach(msg => {
+              if (senderSocketId) {
+                io.to(senderSocketId).emit('message_read', { 
+                  messageId: msg._id, 
+                  status: 'read',
+                  readAt: msg.readAt 
+                });
+              }
+            });
+          }
         }
       } catch (e) {
         console.error('Error updating read status in socket', e);

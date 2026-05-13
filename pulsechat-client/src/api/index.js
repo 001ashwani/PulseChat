@@ -43,4 +43,17 @@ export const reactToMessageApi = (messageId, emoji) => api.post(`/messages/${mes
 export const uploadFileApi = (formData) =>
   api.post('/messages/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 
+// Group Messages
+export const sendGroupMessageApi = (groupId, payload) => api.post(`/messages/group/${groupId}`, payload);
+export const getGroupMessagesApi = (groupId) => api.get(`/messages/group/${groupId}`);
+
+// Groups
+export const createGroupApi = (data) => api.post('/groups', data);
+export const getGroupApi = (groupId) => api.get(`/groups/${groupId}`);
+export const updateGroupApi = (groupId, data) => api.patch(`/groups/${groupId}`, data);
+export const addGroupMembersApi = (groupId, memberIds) => api.post(`/groups/${groupId}/members`, { memberIds });
+export const removeGroupMemberApi = (groupId, userId) => api.delete(`/groups/${groupId}/members/${userId}`);
+export const leaveGroupApi = (groupId) => api.post(`/groups/${groupId}/leave`);
+export const deleteGroupApi = (groupId) => api.delete(`/groups/${groupId}`);
+
 export default api;

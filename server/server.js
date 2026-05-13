@@ -10,6 +10,7 @@ import setupSockets from './sockets/socketHandler.js';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import messageRoutes from './routes/messageRoutes.js';
+import groupRoutes from './routes/groupRoutes.js';
 import { apiLimiter } from './middleware/rateLimiter.js';
 import logger from './utils/logger.js';
 import { existsSync, mkdirSync } from 'fs';
@@ -75,6 +76,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/groups', groupRoutes);
 
 // 404 handler
 app.use((req, res) => {

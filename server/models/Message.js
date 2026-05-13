@@ -24,6 +24,22 @@ const messageSchema = new mongoose.Schema({
     type: String, // URL to uploaded image
     default: null,
   },
+  // Message status: 'sent', 'delivered', 'read'
+  // Backward compat: 'seen: false' = 'sent', 'seen: true' = 'read'
+  status: {
+    type: String,
+    enum: ['sent', 'delivered', 'read'],
+    default: 'sent',
+  },
+  deliveredAt: {
+    type: Date,
+    default: null,
+  },
+  readAt: {
+    type: Date,
+    default: null,
+  },
+  // Legacy field (kept for backward compat, use status instead)
   seen: {
     type: Boolean,
     default: false,

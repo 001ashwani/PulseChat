@@ -1,7 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
-import { sendMessage, getMessages, deleteMessage, reactToMessage } from '../controllers/messageController.js';
+import { sendMessage, getMessages, deleteMessage, reactToMessage, sendGroupMessage, getGroupMessages } from '../controllers/messageController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -22,14 +22,21 @@ const upload = multer({
   },
 });
 
-router.post('/send/:id', protect, sendMessage);
-router.get('/:id', protect, getMessages);
-router.delete('/:id', protect, deleteMessage);
-router.post('/:id/react', protect, reactToMessage);
+// Upload endpoint MUST come before /:id routes to avoid param conflict
 router.post('/upload', protect, upload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
   const url = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
   res.json({ url });
 });
+
+// Group routes (must come before :id routes to avoid collision)
+router.post('/group/:groupId', protect, sendGroupMessage);
+router.get('/group/:groupId', protect, getGroupMessages);
+
+// Direct message routes
+router.post('/send/:id', protect, sendMessage);
+router.post('/:id/react', protect, reactToMessage);
+router.get('/:id', protect, getMessages);
+router.delete('/:id', protect, deleteMessage);
 
 export default router;
