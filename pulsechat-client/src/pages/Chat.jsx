@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useSocket, disconnectSocket } from '../hooks/useSocket';
-import { getUsersApi, getMessagesApi, sendMessageApi, deleteMessageApi, reactToMessageApi, uploadFileApi } from '../api';
+import { getUsersApi, getMessagesApi, sendMessageApi, deleteMessageApi, reactToMessageApi, uploadFileApi, getAllGroupsApi } from '../api';
+import NewGroupModal from './NewGroupModal';
+import GroupList from './GroupList';
+import GroupChat from './GroupChat';
 
 const EMOJIS = ['😀','😂','❤️','👍','👎','😮','😢','🔥','🎉','🙏','😍','😎','🤔','😴','💯'];
 const QUICK_REACTIONS = ['❤️','😂','👍','😮','😢','🙏'];
@@ -33,12 +36,19 @@ export default function Chat() {
   const [typingUsers, setTypingUsers] = useState(new Set());
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [replyTo, setReplyTo] = useState(null);        // message being replied to
-  const [showEmoji, setShowEmoji] = useState(false);   // emoji picker open
-  const [contextMenu, setContextMenu] = useState(null); // { x, y, message }
-  const [imagePreview, setImagePreview] = useState(null); // { url, file }
-  const [msgSearch, setMsgSearch] = useState('');       // search within chat
+  const [replyTo, setReplyTo] = useState(null);
+  const [showEmoji, setShowEmoji] = useState(false);
+  const [contextMenu, setContextMenu] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [msgSearch, setMsgSearch] = useState('');
   const [showMsgSearch, setShowMsgSearch] = useState(false);
+
+  // Group-related state
+  const [showGroupModal, setShowGroupModal] = useState(false);
+  const [groups, setGroups] = useState([]);
+  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [viewMode, setViewMode] = useState('messages');
+  const [loadingGroups, setLoadingGroups] = useState(false);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -55,6 +65,16 @@ export default function Chat() {
       .catch(() => toast.error('Failed to load contacts'))
       .finally(() => setLoadingUsers(false));
   }, []);
+
+  // Fetch groups
+  useEffect(() => {
+    if (!user) return;
+    setLoadingGroups(true);
+    getAllGroupsApi()
+      .then(({ data }) => setGroups(data || []))
+      .catch(() => toast.error('Failed to load groups'))
+      .finally(() => setLoadingGroups(false));
+  }, [user]);
 
   // Fetch messages when a user is selected
   useEffect(() => {
@@ -299,13 +319,13 @@ export default function Chat() {
           New Chat
         </button>
         <div className="flex-1 overflow-y-auto space-y-2 pr-sm custom-scrollbar">
-          <button onClick={() => setSidebarOpen(true)} className="w-full text-on-primary-container font-bold flex items-center gap-4 py-3 px-4 rounded-lg bg-primary-container active:scale-95 transition-transform">
-            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>chat</span>
+          <button onClick={() => { setViewMode('messages'); }} className={`w-full font-bold flex items-center gap-4 py-3 px-4 rounded-lg active:scale-95 transition-transform ${viewMode === 'messages' ? 'text-on-primary-container bg-primary-container' : 'text-on-surface-variant hover:bg-surface-variant/50 hover:text-on-surface'}`} style={{ fontVariationSettings: viewMode === 'messages' ? "'FILL' 1" : "'FILL' 0" }}>
+            <span className="material-symbols-outlined">chat</span>
             <span className="font-label text-sm">Chats</span>
           </button>
-          <button onClick={() => setSidebarOpen(true)} className="w-full text-on-surface-variant flex items-center gap-4 py-3 px-4 rounded-lg hover:bg-surface-variant/50 hover:text-on-surface transition-all duration-200 active:scale-95">
-            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>group</span>
-            <span className="font-label text-sm">Contacts</span>
+          <button onClick={() => { setViewMode('groups'); }} className={`w-full font-bold flex items-center gap-4 py-3 px-4 rounded-lg active:scale-95 transition-transform ${viewMode === 'groups' ? 'text-on-primary-container bg-primary-container' : 'text-on-surface-variant hover:bg-surface-variant/50 hover:text-on-surface'}`} style={{ fontVariationSettings: viewMode === 'groups' ? "'FILL' 1" : "'FILL' 0" }}>
+            <span className="material-symbols-outlined">group</span>
+            <span className="font-label text-sm">Groups</span>
           </button>
         </div>
         <div className="mt-auto pt-lg border-t border-outline-variant/30 space-y-2">
@@ -371,60 +391,79 @@ export default function Chat() {
             )}
             <div className="p-md border-b border-outline-variant/20">
               <div className="flex justify-between items-center mb-sm">
-                <h2 className="font-headline text-2xl font-bold text-on-surface">Messages</h2>
+                <h2 className="font-headline text-2xl font-bold text-on-surface">
+                  {viewMode === 'messages' ? 'Messages' : 'Groups'}
+                </h2>
                 <span className="bg-primary-container text-on-primary-container px-2 py-1 rounded-full font-label text-xs font-bold">New</span>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto custom-scrollbar">
-              {loadingUsers ? (
-                <div className="text-center py-8 text-on-surface-variant font-label text-sm">Loading contacts...</div>
-              ) : filteredUsers.length === 0 ? (
-                <div className="text-center py-8 text-on-surface-variant font-label text-sm">No contacts found</div>
-              ) : (
-                filteredUsers.map(u => {
-                  const online = isOnline(u._id);
-                  const active = selectedUser?._id === u._id;
-                  return (
-                    <div 
-                      key={u._id} 
-                      onClick={() => handleUserSelect(u)}
-                      className={`p-md border-b border-outline-variant/10 cursor-pointer transition-colors flex gap-md items-start group ${active ? 'bg-surface-container border-l-4 border-l-primary' : 'hover:bg-surface-container'}`}
-                    >
-                      <div className="relative flex-shrink-0">
-                        <div className={`w-12 h-12 rounded-full overflow-hidden border transition-colors ${active ? 'border-2 border-primary' : 'border-outline-variant/30 group-hover:border-primary'}`}>
-                          {u.avatar ? (
-                            <img alt={u.name} src={u.avatar} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary text-sm">
-                              {getInitials(u.name)}
-                            </div>
-                          )}
+            {viewMode === 'messages' ? (
+              // Messages list
+              <div className="flex-1 overflow-y-auto custom-scrollbar">
+                {loadingUsers ? (
+                  <div className="text-center py-8 text-on-surface-variant font-label text-sm">Loading contacts...</div>
+                ) : filteredUsers.length === 0 ? (
+                  <div className="text-center py-8 text-on-surface-variant font-label text-sm">No contacts found</div>
+                ) : (
+                  filteredUsers.map(u => {
+                    const online = isOnline(u._id);
+                    const active = selectedUser?._id === u._id;
+                    return (
+                      <div 
+                        key={u._id} 
+                        onClick={() => handleUserSelect(u)}
+                        className={`p-md border-b border-outline-variant/10 cursor-pointer transition-colors flex gap-md items-start group ${active ? 'bg-surface-container border-l-4 border-l-primary' : 'hover:bg-surface-container'}`}
+                      >
+                        <div className="relative flex-shrink-0">
+                          <div className={`w-12 h-12 rounded-full overflow-hidden border transition-colors ${active ? 'border-2 border-primary' : 'border-outline-variant/30 group-hover:border-primary'}`}>
+                            {u.avatar ? (
+                              <img alt={u.name} src={u.avatar} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary text-sm">
+                                {getInitials(u.name)}
+                              </div>
+                            )}
+                          </div>
+                          <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-surface-container-lowest ${online ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-white'}`}></div>
                         </div>
-                        <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-surface-container-lowest ${online ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-white'}`}></div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-baseline mb-xs">
-                          <h3 className="font-label text-sm text-on-surface font-bold truncate">{u.name}</h3>
-                          {u.unreadCount > 0 && (
-                            <span className="bg-primary text-on-primary rounded-full px-2 py-0.5 text-[10px] font-bold shadow-sm">
-                              {u.unreadCount}
-                            </span>
-                          )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-baseline mb-xs">
+                            <h3 className="font-label text-sm text-on-surface font-bold truncate">{u.name}</h3>
+                            {u.unreadCount > 0 && (
+                              <span className="bg-primary text-on-primary rounded-full px-2 py-0.5 text-[10px] font-bold shadow-sm">
+                                {u.unreadCount}
+                              </span>
+                            )}
+                          </div>
+                          <p className={`font-body text-sm truncate ${active ? 'text-on-surface font-medium' : u.unreadCount > 0 ? 'text-on-surface font-bold' : 'text-on-surface-variant'}`}>
+                            {u.lastMessagePreview || u.email}
+                          </p>
                         </div>
-                        <p className={`font-body text-sm truncate ${active ? 'text-on-surface font-medium' : u.unreadCount > 0 ? 'text-on-surface font-bold' : 'text-on-surface-variant'}`}>
-                          {u.lastMessagePreview || u.email}
-                        </p>
                       </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
+                    );
+                  })
+                )}
+              </div>
+            ) : (
+              // Groups list
+              <GroupList 
+                groups={groups}
+                selectedGroupId={selectedGroup?._id}
+                onSelectGroup={group => {
+                  setSelectedGroup(group);
+                  setSidebarOpen(false);
+                }}
+                onNewGroup={() => setShowGroupModal(true)}
+                loading={loadingGroups}
+              />
+            )}
           </aside>
 
           {/* Center Chat Canvas */}
           <main className="flex-1 flex flex-col min-w-0 relative bg-surface-bright">
-            {selectedUser ? (
+            {viewMode === 'messages' ? (
+              // Messages mode
+              selectedUser ? (
               <>
                 {/* Sticky Chat Header */}
                 <div className="h-16 border-b border-outline-variant/30 bg-surface flex items-center justify-between px-md sticky top-0 z-10 shadow-sm">
@@ -652,6 +691,24 @@ export default function Chat() {
                 </button>
               </div>
             )}
+            ) : (
+              // Groups mode
+              selectedGroup ? (
+                <GroupChat groupId={selectedGroup._id} onBack={() => setSelectedGroup(null)} />
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center text-center p-xl">
+                  <div className="w-24 h-24 rounded-full bg-surface-container flex items-center justify-center mb-md border border-outline-variant/20 shadow-sm">
+                    <span className="material-symbols-outlined text-primary text-5xl">group</span>
+                  </div>
+                  <h2 className="font-headline text-2xl font-bold text-on-surface mb-2">No Group Selected</h2>
+                  <p className="font-body text-on-surface-variant max-w-[448px] mb-6">Select a group from the sidebar or create a new one to get started.</p>
+                  <button onClick={() => setShowGroupModal(true)} className="btn-primary w-auto px-6">
+                    <span className="material-symbols-outlined">add</span>
+                    Create Group
+                  </button>
+                </div>
+              )
+            )
           </main>
         </div>
       </div>
@@ -699,6 +756,18 @@ export default function Chat() {
       {(contextMenu || showEmoji) && (
         <div className="fixed inset-0 z-[9998]" onClick={() => { setContextMenu(null); setShowEmoji(false); }} />
       )}
+      {/* New Group Modal */}
+      <NewGroupModal 
+        isOpen={showGroupModal}
+        onClose={() => setShowGroupModal(false)}
+        onGroupCreated={(newGroup) => {
+          setGroups([...groups, newGroup]);
+          setSelectedGroup(newGroup);
+          setViewMode('groups');
+          setShowGroupModal(false);
+        }}
+        contacts={users}
+      />
     </div>
   );
 }

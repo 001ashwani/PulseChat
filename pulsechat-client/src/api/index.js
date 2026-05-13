@@ -48,6 +48,7 @@ export const sendGroupMessageApi = (groupId, payload) => api.post(`/messages/gro
 export const getGroupMessagesApi = (groupId) => api.get(`/messages/group/${groupId}`);
 
 // Groups
+export const getAllGroupsApi = () => api.get('/groups');
 export const createGroupApi = (data) => api.post('/groups', data);
 export const getGroupApi = (groupId) => api.get(`/groups/${groupId}`);
 export const updateGroupApi = (groupId, data) => api.patch(`/groups/${groupId}`, data);
