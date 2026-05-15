@@ -249,13 +249,23 @@ export default function Chat() {
   const handleDelete = async (msg, forEveryone) => {
     setContextMenu(null);
     if (msg.optimistic) { setMessages(prev => prev.filter(m => m._id !== msg._id)); return; }
+    
+    // Confirmation dialog
+    const confirmMsg = forEveryone 
+      ? 'Delete this message for everyone? This cannot be undone.' 
+      : 'Delete this message for you only?';
+    
+    if (!window.confirm(confirmMsg)) return;
+    
     try {
       await deleteMessageApi(msg._id, forEveryone);
       if (forEveryone) {
         setMessages(prev => prev.map(m => m._id === msg._id ? { ...m, deletedForEveryone: true, text: '', image: null } : m));
         socketRef.current?.emit('message_deleted', { messageId: msg._id, receiverId: selectedUser._id });
+        toast.success('Message deleted for everyone');
       } else {
         setMessages(prev => prev.filter(m => m._id !== msg._id));
+        toast.success('Message deleted for you');
       }
     } catch { toast.error('Delete failed'); }
   };
