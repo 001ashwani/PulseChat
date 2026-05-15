@@ -9,6 +9,13 @@ const setupSockets = (io) => {
       socket.userId = userId;
       socket.emit('initial_online_users', Array.from(onlineUsers.keys()));
       io.emit('user_status', { userId, status: 'online' });
+      
+      // Emit user:last-seen event
+      io.emit('user:last-seen', {
+        userId,
+        lastSeen: new Date(),
+        isOnline: true
+      });
     });
 
     socket.on('send_message', (data) => {
@@ -102,12 +109,35 @@ const setupSockets = (io) => {
       if (s) io.to(s).emit('message_reaction', { messageId, reactions });
     });
 
+    // Handle user:last-seen event (when user updates lastSeen manually)
+    socket.on('user:last-seen', (data) => {
+      io.emit('user:last-seen', {
+        userId: data.userId,
+        lastSeen: new Date(),
+        isOnline: true
+      });
+    });
+
+    // Handle user:offline event
+    socket.on('user:offline', (userId) => {
+      io.emit('user:last-seen', {
+        userId,
+        lastSeen: new Date(),
+        isOnline: false
+      });
+    });
+
     socket.on('disconnect', () => {
       console.log(`User disconnected: ${socket.id}`);
       if (socket.userId) {
         if (onlineUsers.get(socket.userId) === socket.id) {
           onlineUsers.delete(socket.userId);
           io.emit('user_status', { userId: socket.userId, status: 'offline', lastSeen: new Date() });
+          io.emit('user:last-seen', {
+            userId: socket.userId,
+            lastSeen: new Date(),
+            isOnline: false
+          });
         }
       }
     });

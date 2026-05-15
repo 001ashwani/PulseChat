@@ -7,6 +7,7 @@ import { getUsersApi, getMessagesApi, sendMessageApi, deleteMessageApi, reactToM
 import NewGroupModal from './NewGroupModal';
 import GroupList from './GroupList';
 import GroupChat from './GroupChat';
+import LastSeenIndicator from './LastSeenIndicator';
 
 const EMOJIS = ['😀','😂','❤️','👍','👎','😮','😢','🔥','🎉','🙏','😍','😎','🤔','😴','💯'];
 const QUICK_REACTIONS = ['❤️','😂','👍','😮','😢','🙏'];
@@ -42,6 +43,7 @@ export default function Chat() {
   const [imagePreview, setImagePreview] = useState(null);
   const [msgSearch, setMsgSearch] = useState('');
   const [showMsgSearch, setShowMsgSearch] = useState(false);
+  const [lastSeenMap, setLastSeenMap] = useState(new Map()); // Track lastSeen for all users
 
   // Group-related state
   const [showGroupModal, setShowGroupModal] = useState(false);
@@ -163,6 +165,18 @@ export default function Chat() {
       setMessages(prev => prev.map(m => m._id === messageId ? { ...m, reactions } : m));
     };
 
+    const onUserLastSeen = ({ userId, lastSeen, isOnline }) => {
+      // Update the lastSeenMap for showing status
+      setLastSeenMap(prev => new Map(prev).set(userId, { lastSeen, isOnline }));
+      
+      // Also update users list to reflect new status
+      setUsers(prev => prev.map(u => 
+        u._id === userId 
+          ? { ...u, lastSeen, isOnline } 
+          : u
+      ));
+    };
+
     socket.on('initial_online_users', onInitialOnlineUsers);
     socket.on('receive_message', onReceiveMessage);
     socket.on('user_status', onUserStatus);
@@ -171,6 +185,7 @@ export default function Chat() {
     socket.on('messages_read', onMessagesRead);
     socket.on('message_deleted', onMessageDeleted);
     socket.on('message_reaction', onMessageReaction);
+    socket.on('user:last-seen', onUserLastSeen);
 
     return () => {
       socket.off('initial_online_users', onInitialOnlineUsers);
@@ -181,6 +196,7 @@ export default function Chat() {
       socket.off('messages_read', onMessagesRead);
       socket.off('message_deleted', onMessageDeleted);
       socket.off('message_reaction', onMessageReaction);
+      socket.off('user:last-seen', onUserLastSeen);
     };
   }, [socketRef, selectedUser]);
 
@@ -484,7 +500,16 @@ export default function Chat() {
                       <h2 className="font-label text-sm font-bold text-on-surface">{selectedUser.name}</h2>
                       <p className="font-body text-xs text-on-surface-variant flex items-center gap-1">
                         <span className={`w-2 h-2 border border-outline-variant/30 rounded-full ${isOnline(selectedUser._id) ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-white'}`}></span>
-                        {isTyping ? 'typing...' : isOnline(selectedUser._id) ? 'Online' : 'Offline'}
+                         {isTyping ? (
+                           <span className="text-green-600 font-semibold">typing...</span>
+                         ) : isOnline(selectedUser._id) ? (
+                           <span className="text-green-600 font-semibold">Online</span>
+                         ) : (
+                           <LastSeenIndicator 
+                             timestamp={lastSeenMap.get(selectedUser._id)?.lastSeen || selectedUser.lastSeen} 
+                             isOnline={false}
+                           />
+                         )}
                       </p>
                     </div>
                   </div>
