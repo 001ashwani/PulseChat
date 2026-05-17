@@ -1,5 +1,7 @@
 import User from '../models/User.js';
 import generateToken from '../utils/generateToken.js';
+import { generateTokenPair, verifyRefreshToken, rotateRefreshToken, revokeAllUserTokens } from '../utils/tokenUtils.js';
+import RefreshToken from '../models/RefreshToken.js';
 import bcrypt from 'bcryptjs';
 import { registerSchema, loginSchema, validateInput } from '../utils/validation.js';
 import logger from '../utils/logger.js';
@@ -40,12 +42,21 @@ export const registerUser = async (req, res) => {
 
     if (user) {
       logger.info(`User registered successfully: ${user.email}`);
+      
+      // Generate token pair
+      const userAgent = req.headers['user-agent'] || 'unknown';
+      const ipAddress = req.ip || req.connection.remoteAddress || 'unknown';
+      const { accessToken, refreshToken } = await generateTokenPair(user._id, userAgent, ipAddress);
+      
       return res.status(201).json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        avatar: user.avatar,
-        token: generateToken(user._id),
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          avatar: user.avatar,
+        },
+        accessToken,
+        refreshToken,
       });
     }
 
@@ -95,12 +106,20 @@ export const loginUser = async (req, res) => {
 
     logger.info(`User logged in: ${user.email}`);
 
+    // Generate token pair
+    const userAgent = req.headers['user-agent'] || 'unknown';
+    const ipAddress = req.ip || req.connection.remoteAddress || 'unknown';
+    const { accessToken, refreshToken } = await generateTokenPair(user._id, userAgent, ipAddress);
+
     return res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      avatar: user.avatar,
-      token: generateToken(user._id),
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
+      },
+      accessToken,
+      refreshToken,
     });
   } catch (error) {
     logger.error('Error in loginUser:', error.message);
@@ -127,3 +146,119 @@ export const logoutUser = async (req, res) => {
   }
 };
 
+// @desc    Refresh access token
+// @route   POST /api/auth/refresh-token
+// @access  Public
+export const refreshAccessToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      logger.warn('Refresh token request without token');
+      return res.status(400).json({ error: 'Refresh token required' });
+    }
+
+    // Verify refresh token
+    const { decoded } = await verifyRefreshToken(refreshToken);
+
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      logger.warn(`Refresh token for non-existent user: ${decoded.id}`);
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    // Rotate refresh token
+    const userAgent = req.headers['user-agent'] || 'unknown';
+    const ipAddress = req.ip || req.connection.remoteAddress || 'unknown';
+    const newRefreshToken = await rotateRefreshToken(user._id, refreshToken, userAgent, ipAddress);
+    const newAccessToken = generateToken(user._id);
+
+    logger.info(`Token refreshed for user: ${user.email}`);
+
+    return res.json({
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    });
+  } catch (error) {
+    logger.error('Error in refreshAccessToken:', error.message);
+    res.status(401).json({ error: 'Invalid refresh token' });
+  }
+};
+
+// @desc    Logout all devices
+// @route   POST /api/auth/logout-all
+// @access  Private
+export const logoutAllDevices = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Revoke all refresh tokens
+    await revokeAllUserTokens(req.user._id);
+
+    // Mark user as offline
+    req.user.isOnline = false;
+    req.user.lastSeen = new Date();
+    await req.user.save();
+
+    logger.info(`User logged out from all devices: ${req.user.email}`);
+
+    return res.json({ message: 'Logged out from all devices successfully' });
+  } catch (error) {
+    logger.error('Error in logoutAllDevices:', error.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// @desc    Get current user refresh tokens (devices)
+// @route   GET /api/auth/devices
+// @access  Private
+export const getUserDevices = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const devices = await RefreshToken.find({
+      userId: req.user._id,
+      revokedAt: null,
+    }).select('userAgent ipAddress createdAt expiresAt');
+
+    return res.json({ devices });
+  } catch (error) {
+    logger.error('Error in getUserDevices:', error.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// @desc    Revoke specific device
+// @route   DELETE /api/auth/devices/:deviceId
+// @access  Private
+export const revokeDevice = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { deviceId } = req.params;
+
+    const refreshToken = await RefreshToken.findById(deviceId);
+    if (!refreshToken) {
+      return res.status(404).json({ error: 'Device not found' });
+    }
+
+    if (refreshToken.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    await refreshToken.revoke();
+
+    logger.info(`Device revoked for user: ${req.user.email}`);
+
+    return res.json({ message: 'Device revoked successfully' });
+  } catch (error) {
+    logger.error('Error in revokeDevice:', error.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
